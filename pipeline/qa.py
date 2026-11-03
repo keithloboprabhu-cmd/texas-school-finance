@@ -31,12 +31,8 @@ def run(con) -> bool:
         f"   crosswalk: {n_ok}/{n_isd} ISDs reporting PEIMS in the latest year matched ({n_ok / n_isd:.1%}); "
         f"{len(un)} directory ISDs without a boundary listed in data/qa/unmatched.csv"
     )
-    bounds = con.execute("""SELECT count(*) FROM mart_district_year
-        WHERE op_per_student_real NOT BETWEEN 5000 AND 60000 AND enrollment > 0""").fetchone()[0]
-    print(
-        f"   per-student spending outside $5k-$60k (logged, not dropped): {bounds} district-years"
-    )
-    con.execute(f"""COPY (SELECT cdn, year, district_name, enrollment, op_per_student_real FROM mart_district_year
-        WHERE op_per_student_real NOT BETWEEN 5000 AND 60000 AND enrollment > 0 ORDER BY year, cdn)
-        TO '{(QA_OUT / "spending_bounds_log.csv").as_posix()}' (HEADER)""")
+    anomalies = con.execute("""SELECT cdn, year, district_name, enrollment, reported_op_per_student_real,
+            data_anomaly AS reason FROM mart_district_year WHERE data_anomaly IS NOT NULL ORDER BY year, cdn""").df()
+    anomalies.to_csv(QA_OUT / "anomalies.csv", index=False)
+    print(f"   district-years removed as data anomalies: {len(anomalies)} (data/qa/anomalies.csv)")
     return ok

@@ -40,8 +40,8 @@ def main() -> None:
 
     text = f"""### 1. Property wealth barely predicts operating spending
 
-In {sy(int(last.year))}, a district with 10% more property wealth per student spent about **{last.elasticity * 10:+.2f}%**
-more per student (95% CI {last.elasticity_lo * 10:+.2f}% to {last.elasticity_hi * 10:+.2f}%; n = {int(last.n_districts):,}
+In {sy(int(last.year))}, a district with 10% more property wealth per student spent about **{abs(last.elasticity * 10):.2f}%**
+{"more" if last.elasticity >= 0 else "less"} per student (95% CI {last.elasticity_lo * 10:+.2f}% to {last.elasticity_hi * 10:+.2f}%; n = {int(last.elasticity_n):,}
 districts, enrollment-weighted). In {sy(int(first.year))} the figure was {first.elasticity * 10:+.2f}%. The spending gap
 between the wealthiest and poorest fifths of students went from {first.quintile_gap_ratio - 1:+.1%} to
 {last.quintile_gap_ratio - 1:+.1%}. After controlling for size, student need, locale and density, the elasticity is a

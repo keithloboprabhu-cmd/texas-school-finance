@@ -25,24 +25,28 @@ def elasticity(df: pd.DataFrame):
 
 def run(con) -> pd.DataFrame:
     df = con.execute("""
-        SELECT y.year, y.cdn, y.enrollment, y.op_per_student_real, y.wealth_per_student_real
+        SELECT y.year, y.cdn, y.enrollment, y.op_per_student_real, y.wealth_per_student_real,
+               coalesce(y.reported_op_per_student_real, y.op_per_student_real) AS op_reported
         FROM mart_district_year y LEFT JOIN mart_districts d USING (cdn)
         WHERE y.enrollment > 0 AND y.operating > 0 AND NOT coalesce(d.enrollment_caution, FALSE)
     """).df()
     rows = []
-    for year, g in df.groupby("year"):
+    for year, g_all in df.groupby("year"):
+        # g: district-years kept; g_all also holds the anomalies removed in mart_district_year
+        # (listed in data/qa/anomalies.csv), used only for the "as reported" CV.
+        g = g_all[g_all.op_per_student_real.notna()]
         x, w = g.op_per_student_real.values, g.enrollment.values
-        ok = (x >= 5000) & (x <= 60000)
+        xr, wr = g_all.op_reported.values, g_all.enrollment.values
         row = {
             "year": int(year),
             "n_districts": len(g),
             "students": int(w.sum()),
             "mean_spend": wmean(x, w),
             "median_spend": wquantile(x, w, 0.5),
-            "cv": wstd(x, w) / wmean(x, w),
-            # CV over district-years inside the $5k-$60k plausibility bounds (out-of-bounds values are
-            # logged in data/qa/spending_bounds_log.csv); one anomalous district can move the CV.
-            "cv_bounded": wstd(x[ok], w[ok]) / wmean(x[ok], w[ok]),
+            # cv: every district-year as reported, anomalies included; one anomalous district can
+            # move it. cv_bounded: after removing the anomalies (out of $5k-$60k, one-year spikes).
+            "cv": wstd(xr, wr) / wmean(xr, wr),
+            "cv_bounded": wstd(x, w) / wmean(x, w),
             "mcloone": mcloone(x, w),
             "p05_spend": wquantile(x, w, 0.05),
             "p95_spend": wquantile(x, w, 0.95),

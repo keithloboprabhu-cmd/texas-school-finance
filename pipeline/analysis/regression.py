@@ -46,7 +46,7 @@ def load(con) -> pd.DataFrame:
                d.median_household_income, d.child_poverty_rate
         FROM mart_district_year y JOIN mart_districts d USING (cdn)
         WHERE y.is_current AND NOT d.enrollment_caution AND y.year = (SELECT max(year) FROM mart_district_year)
-          AND y.enrollment > 0 AND y.operating > 0 AND y.wealth_per_student_real > 0
+          AND y.enrollment > 0 AND y.operating > 0 AND y.op_per_student_real IS NOT NULL AND y.wealth_per_student_real > 0
     """).df()
     df["log_enrollment"] = np.log(df.enrollment)
     df["log_density"] = np.log(df.enrollment / df.land_sq_miles)

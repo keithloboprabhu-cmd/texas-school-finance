@@ -75,8 +75,9 @@ html_out(
     '<p class="ll-caption">Each definition starts with what the measure means. The detail after it is for '
     "readers who want to check our work against TEA's own reports.</p>"
 )
+date_match = data.query("campus_date_match").share_within_one_year.iloc[0]
 st.markdown(
-    md_money("""
+    md_money(f"""
 **Spending per student (the main measure).** What a district spends in a year to run its schools, per student.
 It leaves out debt payments, construction and money sent to the state. In detail, it's day-to-day spending from all funds: PEIMS objects 6100-6400 (payroll,
 contracted services, supplies and other operating costs) in operating functions 11-61, plus 92 and 95 as TEA reports
@@ -131,7 +132,7 @@ groups remaining debt payments by each bond's final year. It isn't a year-by-yea
 Review Board doesn't publish those in bulk.
 
 **New campuses.** Schools that opened in 2016-17 or later. In detail, a school whose federal (NCES) ID first appears after 2015-16, using NCES school locations from 2015-16
-to 2024-25. A new ID can also mean an existing school was reorganized. For 76% of new district campuses that TEA's
+to 2024-25. A new ID can also mean an existing school was reorganized. For {date_match:.0%} of new district campuses that TEA's
 AskTED directory dates, TEA's date is within a year of the federal listing.
 
 **Construction cost.** Texas has no statewide data on cost per square foot, so we don't show one. Building spending per
@@ -165,8 +166,8 @@ st.markdown(
   (debtsearch.brb.texas.gov), and the open-data copy is only a link, last updated in 2017. So the Ballot Beeswarm, pass
   rates and bond dollars per new seat aren't shown.
 - Per-student figures for very small districts swing a lot. One unusual accounting entry can dominate a year. For example,
-  one district reported $130,791 per student in 2017-18. We log values outside the normal range in
-  `data/qa/spending_bounds_log.csv` and never drop them.
+  one district reported $130,791 per student in 2017-18. We remove values outside $5,000-$60,000, one-year
+  spikes, and years with a one-year jump in enrollment, and list every one in `data/qa/anomalies.csv`.
 - Student shares (TAPR 2023-24) are one year older than the latest spending data. Census income is a 5-year average.
 - Shared services arrangements: services a district buys through one of these arrangements don't count as spending for
   that district (function 93 is left out) or for the fiscal agent (its shared services funds are removed).

@@ -147,7 +147,7 @@ with left:
         "hexagons have more. District colors show 10-year enrollment change: clay districts grew, teal districts shrank."
     )
     view_table(shown, "camp")
-    view_sql("new_campuses", "growth")
+    view_sql("new_campuses", "growth", "campus_date_match")
 with right:
     legend_diverging("10-year enrollment change", "shrinking", "growing")
     st.markdown("**Districts that added the most students** (10 years)")
@@ -163,9 +163,10 @@ with right:
             "new_campuses_since_2016_17": "new campuses",
         },
     )
+    date_match = data.query("campus_date_match").share_within_one_year.iloc[0]
     st.caption(
         "A new campus here is a school whose federal (NCES) ID first appears after 2015-16. A new ID can also mean "
-        "an existing school was reorganized, so this count may run a little high. For 76% of new district campuses "
+        f"an existing school was reorganized, so this count may run a little high. For {date_match:.0%} of new district campuses "
         "that TEA's directory dates, TEA's date is within a year of the federal listing."
     )
 

@@ -19,16 +19,16 @@ Computed from the committed marts by `scripts/readme_findings.py`. Each comes wi
 <!-- findings:start -->
 ### 1. Property wealth barely predicts operating spending
 
-In 2024-25, a district with 10% more property wealth per student spent about **-0.03%**
-more per student (95% CI -0.37% to +0.30%; n = 1,008
-districts, enrollment-weighted). In 2010-11 the figure was +0.25%. The spending gap
-between the wealthiest and poorest fifths of students went from +6.1% to
+In 2024-25, a district with 10% more property wealth per student spent about **0.03%**
+less per student (95% CI -0.37% to +0.30%; n = 1,002
+districts, enrollment-weighted). In 2010-11 the figure was +0.23%. The spending gap
+between the wealthiest and poorest fifths of students went from +5.9% to
 +0.4%. After controlling for size, student need, locale and density, the elasticity is a
 small positive +0.067 (95% CI +0.043 to +0.092).
 
 ```sql
 -- Atlas findings strip: statewide equity in the first and latest years with property-wealth data.
-SELECT year, elasticity, elasticity_lo, elasticity_hi, wealth_spend_corr, mean_spend, median_spend,
+SELECT year, elasticity, elasticity_lo, elasticity_hi, elasticity_r2, elasticity_n, wealth_spend_corr, mean_spend, median_spend,
        quintile_gap_ratio, quintile_gap_dollars, mcloone, restricted_range_ratio, n_districts, students
 FROM mart_equity_state_year
 WHERE elasticity IS NOT NULL
@@ -38,8 +38,8 @@ ORDER BY year;
 ### 2. The biggest over-spenders are tiny rural districts
 
 All **15 of the 15** districts that spend furthest above the controlled model's prediction
-in 2024-25 have fewer than 500 students (median 92) and are rural. They spend a
-median $36,600 per student against $15,218 predicted. Statewide,
+in 2024-25 have fewer than 500 students (median 100) and are rural. They spend a
+median $32,824 per student against $15,210 predicted. Statewide,
 31% of districts are that small. Size, more than wealth, marks the extremes.
 
 ```sql
@@ -61,13 +61,17 @@ GROUP BY direction;
 
 Districts paid **$2.96B** in recapture in 2024-25. Of that, $971M
 (33%) came from the 40 paying districts
-where oil, gas and other minerals are most of the tax base, and 82 of the
+where oil, gas and other minerals are most of the tax base, and 83 of the
 226 payers have below-median household income. Property-rich is not the same as rich residents.
 
 ```sql
--- Finding 03: recapture by property mix and household income (2025; property mix of tax year 2025 - 1)
+-- Finding 03: recapture by property mix and household income (2025; property mix of tax year 2025 - 1).
+-- The income median uses the same districts as the Wealth & Spending income chart
+-- (not enrollment_caution, with spending, property wealth and Census income).
 WITH y AS (
-  SELECT m.cdn, m.recapture_paid, d.median_household_income AS income, p.mineral_share
+  SELECT m.cdn, m.recapture_paid, d.median_household_income AS income, p.mineral_share,
+         NOT d.enrollment_caution AND m.enrollment > 0 AND m.op_per_student_real IS NOT NULL
+           AND m.wealth_per_student_real > 0 AND d.median_household_income IS NOT NULL AS in_chart
   FROM mart_district_year m
   JOIN mart_districts d USING (cdn)
   LEFT JOIN mart_property_mix p ON p.cdn = m.cdn AND p.tax_year = 2025 - 1
@@ -77,7 +81,8 @@ SELECT count(*) FILTER (WHERE recapture_paid > 0)                               
        sum(recapture_paid)                                                          AS total_paid,
        sum(recapture_paid) FILTER (WHERE mineral_share > 0.5)                       AS paid_by_mineral_majority,
        count(*) FILTER (WHERE recapture_paid > 0 AND mineral_share > 0.5)           AS payers_mineral_majority,
-       count(*) FILTER (WHERE recapture_paid > 0 AND income < (SELECT median(income) FROM y)) AS payers_below_median_income
+       count(*) FILTER (WHERE recapture_paid > 0
+                          AND income < (SELECT median(income) FROM y WHERE in_chart))  AS payers_below_median_income
 FROM y;
 ```
 
