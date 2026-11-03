@@ -1,95 +1,88 @@
-# Registry of every external data source used by the pipeline.
-# `files` are fetched by `python -m pipeline.ingest.fetch` into data/raw/<source>/.
-# `status` records what has been verified *from the file itself* (not from documentation).
-# Nothing below is used in a transform until its fields are confirmed against the downloaded file
-# or its official data dictionary.
-
 tea_peims:
   name: TEA PEIMS actual financial data
   publisher: Texas Education Agency
   landing: https://tea.texas.gov/about-tea/state-funding/state-funding-reports-and-data/peims-financial-data-downloads
   files:
-    - {name: peims_actuals_summarized_2009_2025.xlsx, url: "https://tea.texas.gov/media/423296"}
+  - name: peims_actuals_summarized_2009_2025.xlsx
+    url: https://tea.texas.gov/media/423296
   fallback_landing: https://tea.texas.gov/about-tea/state-funding/state-funding-reports-and-data/peims-single-file-financial-data-downloads
-  notes: >-
-    Summarized file (sheet DATAMART) verified: one row per district (incl. charters) and year,
-    YEAR = school-year ending year (2025 = 2024-25). Single-file district actuals for 2009-2025 are
-    downloaded by pipeline/ingest/tea_peims.py. Code meanings cited from FASRG Update 20.
+  notes: 'Summarized file (sheet DATAMART) verified: one row per district (incl. charters) and year, YEAR = school-year
+    ending year (2025 = 2024-25). Single-file district actuals for 2009-2025 are downloaded by pipeline/ingest/tea_peims.py.
+    Code meanings cited from FASRG Update 20.'
   status: verified 2026-11-03
-
 tea_sof:
   name: TEA Summary of Finances (SOF)
   publisher: Texas Education Agency
   landing: https://tea.texas.gov/finance-and-grants/state-funding/foundation-school-program/summary-of-finances
-  files: []   # file links are listed on the landing page; record them here once confirmed
-  status: not yet downloaded
-
+  files: []
+  status: 'not used: report app with no bulk download'
+  notes: The Summary of Finances is published through TEA's FSP Reports web application (https://tealprod.tea.state.tx.us/Tea.FspReports.Web/),
+    one district at a time, with no statewide download. As a result ADA and WADA are not available for every district;
+    per-student figures use fall enrollment.
 comptroller_pvs:
   name: Comptroller School District Property Value Study (final findings)
   publisher: Texas Comptroller of Public Accounts
   landing: https://comptroller.texas.gov/taxes/property-tax/pvs/2025f/
-  files: []   # "ISD Worksheet Export" XLSX links per year (/pvs/2025f, /pvs/2024f, ...)
-  status: not yet downloaded
-
+  files: []
+  status: verified 2026-11-03
+  notes: Final ISD Worksheet Export Summary for tax years 2022-2025 (earlier years have no export). Used for property
+    mix; ASGN T2 equals TEA's 'value assigned' for 98-100% of districts.
 tea_recapture:
   name: TEA Excess Local Revenue (recapture) district list
   publisher: Texas Education Agency
   landing: https://tea.texas.gov/about-tea/state-funding/excess-local-revenue
-  files:
-    - {name: excess_local_revenue_2025_26.pdf, url: "https://tea.texas.gov/finance-and-grants/state-funding/excess-local-revenue/2025-2026-excess-local-revenue-districts.pdf"}
-  status: not yet downloaded
-
+  files: []
+  status: verified 2026-11-03
+  notes: Recapture Paid by District, 1993-94 to 2026-27 (2025-26 near-final, 2026-27 preliminary per TEA's footnotes);
+    Excess Local Revenue lists for 2025-26 (358 districts; PDF COUNT line checked) and 2026-27 (395).
 tea_tax_rates:
   name: TEA school district adopted M&O and I&S tax rates, 2006-2025
   publisher: Texas Education Agency
   landing: https://tea.texas.gov/about-tea/state-funding/additional-finance-resources/school-district-property-values-and-tax-rates
   files:
-    - {name: school_district_adopted_tax_rates.xlsx, url: "https://tea.texas.gov/about-tea/state-funding/additional-finance-resources/school-district-adopted-tax-rates-1.xlsx"}
-  status: not yet downloaded
-
+  - name: school_district_adopted_tax_rates.xlsx
+    url: https://tea.texas.gov/about-tea/state-funding/additional-finance-resources/school-district-adopted-tax-rates-1.xlsx
+  status: verified 2026-11-03
+  notes: Adopted M&O and I&S rates by school year, 2005-06 to 2024-25.
 tea_tapr:
   name: TEA Texas Academic Performance Reports (district level)
   publisher: Texas Education Agency
   landing: https://rptsvr1.tea.texas.gov/perfreport/tapr/2024/download.html
-  files: []   # district-level comma-delimited downloads; pattern /perfreport/tapr/<year>/
+  files: []
   status: not yet downloaded
-
 census_saipe:
   name: Census SAIPE school district estimates (API)
   publisher: U.S. Census Bureau
   landing: https://www.census.gov/programs-surveys/saipe/data/api.html
   api: https://api.census.gov/data/timeseries/poverty/saipe/schdist
   status: not yet downloaded
-
 census_acs:
   name: Census ACS 5-year estimates by school district (API)
   publisher: U.S. Census Bureau
   landing: https://www.census.gov/data/developers/data-sets/acs-5year.html
   status: not yet downloaded
-
 nces_boundaries:
   name: NCES EDGE School District Composites SY 2024-25 (TL 2025)
   publisher: National Center for Education Statistics
   landing: https://catalog.data.gov/dataset/school-district-composites-sy-2024-25-tl-25
   files:
-    - {name: EDGE_SCHOOLDISTRICT_TL25_SY2425.zip, url: "https://nces.ed.gov/programs/edge/data/EDGE_SCHOOLDISTRICT_TL25_SY2425.zip"}
+  - name: EDGE_SCHOOLDISTRICT_TL25_SY2425.zip
+    url: https://nces.ed.gov/programs/edge/data/EDGE_SCHOOLDISTRICT_TL25_SY2425.zip
   status: not yet downloaded
-
 nces_school_points:
   name: NCES EDGE public school locations 2024-25
   publisher: National Center for Education Statistics
   landing: https://catalog.data.gov/dataset/public-school-locations-2024-25
   files:
-    - {name: EDGE_GEOCODE_PUBLICSCH_2425.zip, url: "https://nces.ed.gov/programs/edge/data/EDGE_GEOCODE_PUBLICSCH_2425.zip"}
+  - name: EDGE_GEOCODE_PUBLICSCH_2425.zip
+    url: https://nces.ed.gov/programs/edge/data/EDGE_GEOCODE_PUBLICSCH_2425.zip
   status: not yet downloaded
-
 nces_ccd_lea:
   name: NCES Common Core of Data LEA directory (CDN <-> LEAID crosswalk)
   publisher: National Center for Education Statistics
   landing: https://nces.ed.gov/ccd/files.asp
-  files: []   # pick the latest LEA directory file and record it here
+  files: []
   status: not yet downloaded
-
 brb_bond_elections:
   name: Texas Bond Review Board local bond elections (school districts)
   publisher: Texas Bond Review Board
@@ -97,18 +90,26 @@ brb_bond_elections:
   discovery: https://api.us.socrata.com/api/catalog/v1?domains=data.texas.gov&q=bond%20review%20board
   notes: Portal copies listed a last update of June 2020; check freshness before use.
   status: not yet downloaded
-
 brb_debt:
   name: Texas Bond Review Board Data Center ISD debt pages
   publisher: Texas Bond Review Board
   landing: https://data.brb.texas.gov/local/isd/60.html
-  notes: per-district CSVs at https://data.brb.texas.gov/charts/local/isd/<brb_id>/<chart>.csv; BRB id is not the CDN
+  notes: per-district CSVs at https://data.brb.texas.gov/charts/local/isd/<brb_id>/<chart>.csv; BRB id is not the
+    CDN
   status: not yet downloaded
-
 fred_cpi:
   name: CPI-U, all items (CPIAUCSL)
   publisher: Federal Reserve Bank of St. Louis (FRED), from BLS
   landing: https://fred.stlouisfed.org/series/CPIAUCSL
   files:
-    - {name: CPIAUCSL.csv, url: "https://fred.stlouisfed.org/graph/fredgraph.csv?id=CPIAUCSL"}
+  - name: CPIAUCSL.csv
+    url: https://fred.stlouisfed.org/graph/fredgraph.csv?id=CPIAUCSL
   status: not yet downloaded
+tea_cptd:
+  name: Comptroller certified school district property values (PTAD Tax Final), posted by TEA
+  publisher: Texas Comptroller of Public Accounts, via Texas Education Agency
+  landing: https://tea.texas.gov/about-tea/state-funding/additional-finance-resources/school-district-property-values-and-tax-rates
+  notes: Tax years 2010-2025; column '<year> value assigned (used for school funding)'. The tax year 2009 link returns
+    'Page not found'. TEA's tax year 2022 file lists 966 districts; the other 48 are filled from the Comptroller
+    PVS (ASGN T2).
+  status: verified 2026-11-03
