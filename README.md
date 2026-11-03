@@ -4,7 +4,7 @@
 districts are the outliers? An interactive atlas of every Texas school district's wealth, spending, recapture, debt and
 growth, built on a reproducible pipeline over official Texas and federal data.
 
-**Live app:** _deployment pending (see [Deploy](#deploy))_
+**Live app:** https://texas-school-finance.streamlit.app
 
 ![The Atlas: districts coloured by thirds of property wealth and spending per student](docs/hero.png)
 

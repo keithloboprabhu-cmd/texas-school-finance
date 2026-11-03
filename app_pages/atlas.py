@@ -149,7 +149,7 @@ geo = maps.features_with(
     ["cdn", "district_name", "fill", "tip"] + (["elev"] if "elev" in df else []),
 )
 for f in geo["features"]:
-    f["tip"] = f["properties"]["tip"]  # deck.gl tooltips read top-level keys
+    f["tip"] = f["properties"].pop("tip")  # deck.gl tooltips read top-level keys; keep one copy
 
 layers = []
 if view == "3D Wealth Relief":

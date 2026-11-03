@@ -70,22 +70,6 @@ if h.enrollment_caution:
 
 top_l, top_r = st.columns([2.4, 1], gap="large")
 with top_r:
-    mini = data.query("atlas_layers", year=latest)
-    geo = maps.features_with(
-        data.geojson("tx_districts_simplified"),
-        mini.assign(
-            fill=[[168, 67, 42, 255] if c == cdn else [217, 210, 195, 255] for c in mini.cdn]
-        ),
-        ["cdn", "fill"],
-    )
-    layer = pdk.Layer(
-        "GeoJsonLayer",
-        geo,
-        get_fill_color="properties.fill",
-        get_line_color=[251, 248, 242, 255],
-        line_width_min_pixels=0.2,
-        stroked=True,
-    )
     pin = pdk.Layer(
         "ScatterplotLayer",
         [{"p": [float(h.lon), float(h.lat)]}],
@@ -97,9 +81,18 @@ with top_r:
         get_line_color=[27, 26, 23, 255],
         line_width_min_pixels=1.5,
     )
+    outline = pdk.Layer(
+        "GeoJsonLayer",
+        data.geojson("tx_outline"),
+        filled=True,
+        stroked=True,
+        get_fill_color=[236, 230, 217, 255],
+        get_line_color=[27, 26, 23, 255],
+        line_width_min_pixels=1,
+    )
     st.pydeck_chart(
-        pdk.Deck(
-            layers=[layer, pin],
+        maps.CompactDeck(
+            layers=[outline, pin],
             initial_view_state=pdk.ViewState(latitude=31.2, longitude=-99.4, zoom=3.6),
             map_provider=None,
             map_style=None,

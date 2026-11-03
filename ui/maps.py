@@ -116,7 +116,7 @@ def deck(layers, view=TX_VIEW, tooltip_html: str | None = None, height: int = 62
                 "borderRadius": "4px",
             },
         }
-    return pdk.Deck(
+    return CompactDeck(
         layers=layers,
         initial_view_state=view,
         map_provider="carto",
@@ -145,3 +145,15 @@ def flat_arc(src, dst, bend: float = 0.18, n: int = 24) -> list[list[float]]:
             ]
         )
     return pts
+
+
+class CompactDeck(pdk.Deck):
+    """pydeck serializes with indent=2, which inflates a 1.5 MB GeoJSON to ~9 MB per rerun.
+    Serialize compactly instead (same content, about 6x smaller over the websocket)."""
+
+    def to_json(self):
+        import json
+
+        from pydeck.bindings.json_tools import default_serialize
+
+        return json.dumps(self, sort_keys=True, default=default_serialize, separators=(",", ":"))
