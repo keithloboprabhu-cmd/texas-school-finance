@@ -8,6 +8,7 @@ import streamlit as st
 from ui import data
 from ui.components import page_header
 from ui.sql_guard import MAX_ROWS, QUERY_TIMEOUT_S, QueryRejected, run_query
+from ui.theme import html as html_out
 
 SAVED = Path(__file__).resolve().parent.parent / "sql" / "saved"
 
@@ -20,7 +21,7 @@ page_header(
 
 tables = data.available_marts()
 if not tables:
-    st.html(
+    html_out(
         '<div class="ll-notice"><strong>No marts built yet.</strong> '
         "Run <code>make data</code> to build the warehouse; tables will appear here.</div>"
     )

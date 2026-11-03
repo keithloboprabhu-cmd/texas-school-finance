@@ -23,6 +23,7 @@ from ui.components import (
     view_table,
 )
 from ui.theme import CLAY, INK_2
+from ui.theme import html as html_out
 
 if not require_marts("mart_recapture", "mart_money_cycle_state_year"):
     st.stop()
@@ -33,7 +34,7 @@ page_header(
     "Recapture",
     "Which districts send local property-tax revenue to the state, and how much.",
 )
-st.html(
+html_out(
     f'<p class="ll-subtitle" style="margin-top:0">How it works: Texas sets how much revenue each district is '
     f"entitled to from its local taxes and state aid. A property-wealthy district whose local M&O taxes would raise "
     f"more than that entitlement sends the excess to the state, which uses it in the Foundation School Program "

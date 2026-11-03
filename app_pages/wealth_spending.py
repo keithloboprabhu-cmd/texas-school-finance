@@ -24,6 +24,7 @@ from ui.components import (
 )
 from ui.stats import wls_hc1
 from ui.theme import CLAY, INK_2
+from ui.theme import html as html_out
 
 if not require_marts("mart_district_year", "mart_outliers_latest", "mart_model_latest"):
     st.stop()
@@ -68,10 +69,10 @@ b, (lo, hi), r2, n = wls_hc1(
 
 left, right = st.columns([2.3, 1], gap="large")
 with right:
-    st.html(
+    html_out(
         f'<div class="ll-kicker">{term("elasticity", "Wealth elasticity of spending")}, {sy(year)}</div>'
     )
-    st.html(
+    html_out(
         f'<div class="ll-metric"><div class="value">{b:+.3f}</div>'
         f'<div class="label">95% CI {lo:+.3f} to {hi:+.3f} · R² {r2:.2f} · n = {n:,}</div></div>'
     )
@@ -183,7 +184,7 @@ with left:
 # ---------------------------------------------------------------- outliers
 rule()
 st.subheader(f"Outliers after controls, {sy(latest)}", anchor=False)
-st.html(
+html_out(
     f'<p class="ll-reading">Ranked by standardized residual from the controlled model: how far actual spending '
     f'sits from what wealth, size, need, locale and density predict. "Why it might be" hints use only this '
     f"project's data. ⚑ = ranking changes under {term('huber', 'Huber robust regression')}.</p>"
@@ -240,7 +241,7 @@ view_sql("outliers_latest")
 # ---------------------------------------------------------------- two wealths
 rule()
 st.subheader("Two kinds of wealth", anchor=False)
-st.html(
+html_out(
     f'<p class="ll-reading">{term("property_wealth", "Property wealth")} is the tax base; household income is '
     "the community. Where they diverge, a district can be property-rich but income-poor (mineral or "
     "industrial value) or the reverse.</p>"

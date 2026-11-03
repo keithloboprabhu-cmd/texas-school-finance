@@ -10,22 +10,23 @@ import streamlit as st
 
 from ui import data
 from ui.theme import BIVARIATE_3X3, DIVERGING_7, SEQUENTIAL_7
+from ui.theme import html as html_out
 
 
 def page_header(kicker: str, title: str, subtitle: str | None = None) -> None:
-    st.html(f'<div class="ll-kicker">{html.escape(kicker)}</div>')
+    html_out(f'<div class="ll-kicker">{html.escape(kicker)}</div>')
     st.title(title, anchor=False)
     if subtitle:
-        st.html(f'<p class="ll-subtitle">{html.escape(subtitle)}</p>')
+        html_out(f'<p class="ll-subtitle">{html.escape(subtitle)}</p>')
 
 
 def rule() -> None:
-    st.html('<hr class="ll-rule">')
+    html_out('<hr class="ll-rule">')
 
 
 def metric(label: str, value: str, note: str | None = None) -> None:
     n = f'<div class="note">{html.escape(note)}</div>' if note else ""
-    st.html(
+    html_out(
         f'<div class="ll-metric"><div class="value">{html.escape(value)}</div>'
         f'<div class="label">{html.escape(label)}</div>{n}</div>'
     )
@@ -33,11 +34,11 @@ def metric(label: str, value: str, note: str | None = None) -> None:
 
 def reading(text: str) -> None:
     """One-line 'how to read this'."""
-    st.html(f'<p class="ll-reading">{html.escape(text)}</p>')
+    html_out(f'<p class="ll-reading">{html.escape(text)}</p>')
 
 
 def notice(title: str, body: str) -> None:
-    st.html(f'<div class="ll-notice"><strong>{html.escape(title)}</strong> {body}</div>')
+    html_out(f'<div class="ll-notice"><strong>{html.escape(title)}</strong> {body}</div>')
 
 
 def term(key: str, text: str | None = None) -> str:
@@ -74,7 +75,7 @@ def legend_quantile(title: str, breaks: list[float], fmt, palette=SEQUENTIAL_7) 
             f'<div class="ll-leg-item"><span class="sw" style="background:{col}"></span>'
             f"{html.escape(fmt(breaks[i]))} to {html.escape(fmt(breaks[i + 1]))}</div>"
         )
-    st.html(
+    html_out(
         f'<div class="ll-legend"><div class="ll-leg-title">{html.escape(title)} '
         f'<span class="ll-caption">(7 quantile classes)</span></div>{"".join(items)}</div>'
     )
@@ -82,7 +83,7 @@ def legend_quantile(title: str, breaks: list[float], fmt, palette=SEQUENTIAL_7) 
 
 def legend_diverging(title: str, low: str, high: str) -> None:
     sw = "".join(f'<span class="sw" style="background:{c}"></span>' for c in DIVERGING_7)
-    st.html(
+    html_out(
         f'<div class="ll-legend"><div class="ll-leg-title">{html.escape(title)}</div>'
         f'<div class="ll-div">{sw}</div><div class="ll-div-labels"><span>{html.escape(low)}</span>'
         f"<span>{html.escape(high)}</span></div></div>"
@@ -94,7 +95,7 @@ def legend_bivariate() -> None:
     for s in (3, 2, 1):
         for w in (1, 2, 3):
             cells.append(f'<span style="background:{BIVARIATE_3X3[(w, s)]}"></span>')
-    st.html(
+    html_out(
         '<div class="ll-legend ll-bivar"><div class="grid">' + "".join(cells) + "</div>"
         '<div class="axes"><div>more spending per student &uarr;</div><div>more property wealth per student &rarr;</div>'
         '<div class="ll-caption">Each axis split into thirds of districts. Dark purple: wealthy and high-spending. '
@@ -108,7 +109,7 @@ def require_marts(*names: str) -> bool:
     if not missing:
         return True
     items = "".join(f"<li><code>data/marts/{html.escape(n)}.parquet</code></li>" for n in missing)
-    st.html(
+    html_out(
         '<div class="ll-notice"><strong>Data not built yet.</strong> This page needs marts produced by '
         f"<code>make data</code>:<ul>{items}</ul>No placeholder numbers are shown in the meantime.</div>"
     )

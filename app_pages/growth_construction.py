@@ -25,6 +25,7 @@ from ui.components import (
 )
 from ui.stats import wls_hc1
 from ui.theme import CLAY, INK_2
+from ui.theme import html as html_out
 
 if not require_marts("mart_growth_capital", "mart_campuses"):
     st.stop()
@@ -214,7 +215,7 @@ view_sql("growth")
 # ---------------------------------------------------------------- proxies
 rule()
 st.subheader("Cost per new seat: proxies", anchor=False)
-st.html(
+html_out(
     f'<p class="ll-reading">Texas has no statewide dataset of school construction cost per square foot, so none is '
     f"shown. These are {term('proxy', 'proxies')}: real capital spending over five years divided by students added "
     f"(districts adding at least 50) or by campuses opened in the same window. They mix new schools with "

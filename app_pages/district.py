@@ -27,6 +27,7 @@ from ui.components import (
     view_table,
 )
 from ui.theme import CLAY, INK_2, RULE
+from ui.theme import html as html_out
 
 if not require_marts("mart_district_year", "mart_districts", "mart_peers"):
     st.stop()
@@ -100,13 +101,15 @@ with top_r:
         height=230,
     )
     rs = "pays recapture" if h.recapture_paid > 0 else "no recapture"
-    st.html(
+    html_out(
         f'<div class="ll-caption">Locator · {rs} in {sy(latest)}'
         + (f" ({big_money(h.recapture_paid)})" if h.recapture_paid > 0 else "")
         + "</div>"
     )
     link = f"?district={cdn}"
-    st.html(f'<p class="ll-caption">Share this view: <code>/district{html.escape(link)}</code></p>')
+    html_out(
+        f'<p class="ll-caption">Share this view: <code>/district{html.escape(link)}</code></p>'
+    )
 
 with top_l:
     m = st.columns(5)

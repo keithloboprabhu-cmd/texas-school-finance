@@ -22,6 +22,7 @@ from ui.components import (
     view_table,
 )
 from ui.theme import CLAY, INK_2, RULE
+from ui.theme import html as html_out
 
 if not require_marts("mart_equity_state_year"):
     st.stop()
@@ -116,7 +117,7 @@ marker_text = "; ".join(
     f'<a href="{e["source"]}">{e["label"]}</a> (enacted {e["date"]}, first affects {sy(e["school_year"])})'
     for e in events
 )
-st.html(
+html_out(
     f'<p class="ll-reading">Clay dotted line: law changes with a cited primary source: {marker_text}. Changes '
     f"after {sy(y1)} are listed but not plotted. CV: solid = within the $5k-$60k plausibility bounds, dotted = "
     "all district-years (one district reporting $130,791 per student in 2017-18 drives the spike).</p>"

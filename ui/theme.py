@@ -50,4 +50,16 @@ def _css() -> str:
 
 def apply_theme() -> None:
     """Inject the custom CSS. Call once per page run (from app.py)."""
-    st.html(f"<style>{_css()}</style>")
+    st.markdown(f"<style>{_css()}</style>", unsafe_allow_html=True)
+
+
+def html(markup: str) -> None:
+    """Render raw HTML through Streamlit's Markdown element.
+
+    Used instead of st.html: on Streamlit Community Cloud the separate Html front-end module failed to
+    load in some browsers ("Failed to fetch dynamically imported module .../Html.*.js"), while Markdown
+    is always loaded. Dollar signs are escaped so Markdown does not render them as LaTeX, and newlines
+    are collapsed so indented HTML is not mistaken for a Markdown code block.
+    """
+    safe = markup.replace("$", "&#36;").replace("\n", " ")
+    st.markdown(safe, unsafe_allow_html=True)

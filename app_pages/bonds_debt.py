@@ -28,6 +28,7 @@ from ui.components import (
 )
 from ui.stats import wls_hc1
 from ui.theme import CLAY, INK_2, SEQUENTIAL_7
+from ui.theme import html as html_out
 
 if not require_marts("mart_debt_district", "mart_maturity_wall", "mart_tax_rates_state_year"):
     st.stop()
@@ -189,7 +190,7 @@ rule()
 a, b = st.columns(2, gap="large")
 with a:
     st.subheader("Capital appreciation bonds", anchor=False)
-    st.html(
+    html_out(
         f'<p class="ll-reading">{term("cab", "CABs")} defer all interest to maturity, so the final bill is '
         f"large relative to principal. Statewide share of outstanding principal by fiscal year:</p>"
     )

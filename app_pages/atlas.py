@@ -28,6 +28,7 @@ from ui.components import (
     view_table,
 )
 from ui.theme import DIVERGING_7, INK_2, SEQUENTIAL_7
+from ui.theme import html as html_out
 
 if not require_marts("mart_district_year", "mart_districts", "mart_equity_state_year"):
     st.stop()
@@ -248,7 +249,7 @@ with left:
         selection_mode="single-object",
         key=f"atlas_{view}_{metric}_{year}",
     )
-    st.html(
+    html_out(
         '<div class="ll-source">N ↑ · Web Mercator, scale varies with latitude · Sources: TEA PEIMS, Comptroller '
         "certified values, Census SAIPE/ACS, NCES EDGE, Texas Bond Review Board · Data as of "
         f"{sy(latest)} (spending), FY{int(data.query('debt_state_year').fiscal_year.max())} (debt) · Basemap © CARTO, © OpenStreetMap</div>"
@@ -287,7 +288,7 @@ with right:
         sel = df[df.district_name.map(nice) == search].cdn.iloc[0]
     if sel:
         r = df[df.cdn == sel].iloc[0]
-        st.html(
+        html_out(
             f'<div class="ll-panel"><div class="ll-kicker">Selected</div>'
             f'<h3 style="margin:0.2rem 0">{html.escape(nice(r.district_name))}</h3>'
             f'<div class="ll-caption">{html.escape(str(r.county).title())} · ESC Region {r.esc_region} · {r.locale}</div></div>'
@@ -314,7 +315,7 @@ with right:
         else:
             i = st.session_state.tour_step
             s = stops[i]
-            st.html(
+            html_out(
                 f'<div class="ll-tourcard"><div class="step">Stop {i + 1} of {len(stops)}</div>'
                 f'<h3 style="margin:0.2rem 0">{html.escape(s["title"])}</h3><p>{html.escape(s["text"])}</p>'
                 f'<div class="big">{html.escape(s["number"])}</div>'
@@ -374,7 +375,7 @@ rec = data.query("finding_recapture", year=latest).iloc[0]
 
 f1, f2, f3 = st.columns(3, gap="large")
 with f1:
-    st.html(
+    html_out(
         '<div class="ll-finding"><div class="num">01</div><p>In '
         f"{sy(int(last.year))}, property wealth barely predicts operating spending per student: a district with 10% "
         f"more wealth per student spends about <b>{last.elasticity * 10:+.2f}%</b> more (95% CI "
@@ -396,7 +397,7 @@ with f1:
     charts.show(fig, height=180, key="f1")
     st.page_link("app_pages/wealth_spending.py", label="Explore →")
 with f2:
-    st.html(
+    html_out(
         '<div class="ll-finding"><div class="num">02</div><p>'
         f"All <b>{int(over.n_small)} of the {int(over.n)}</b> districts that spend most above prediction have fewer than "
         f"500 students (median {over.median_enrollment:,.0f}); they spend {money(over.median_actual)} per student "
@@ -417,7 +418,7 @@ with f2:
     charts.show(fig, height=180, key="f2")
     st.page_link("app_pages/wealth_spending.py", label="Explore →")
 with f3:
-    st.html(
+    html_out(
         '<div class="ll-finding"><div class="num">03</div><p>'
         f"Districts paid <b>{big_money(rec.total_paid)}</b> in recapture in {sy(latest)}. "
         f"{big_money(rec.paid_by_mineral_majority)} ({rec.paid_by_mineral_majority / rec.total_paid:.0%}) came from "
