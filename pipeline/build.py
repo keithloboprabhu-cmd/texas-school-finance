@@ -34,6 +34,8 @@ INGEST = {
     "pipeline.ingest.tea_recapture": ["recapture_paid.parquet", "elr_lists.parquet"],
     "pipeline.ingest.census": ["saipe.parquet", "acs.parquet"],
     "pipeline.ingest.tea_tapr": ["tapr.parquet"],
+    "pipeline.ingest.brb": ["brb_issuance.parquet", "brb_cab_cib.parquet"],
+    "pipeline.ingest.nces_schools": ["school_points.parquet"],
     "pipeline.ingest.fred_cpi": ["cpi_school_year.parquet"],
     "pipeline.ingest.nces": [
         "boundaries.parquet",
@@ -61,6 +63,9 @@ SQL_ORDER = {
         "mart_property_mix.sql",
         "mart_money_cycle_state_year.sql",
         "mart_charters_state_year.sql",
+        "mart_debt.sql",
+        "mart_campuses.sql",
+        "mart_growth_capital.sql",
     ],
 }
 ANALYSIS = ["pipeline.analysis.equity", "pipeline.analysis.regression", "pipeline.analysis.peers"]
