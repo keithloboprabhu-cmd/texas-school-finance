@@ -49,3 +49,19 @@ def test_elasticity_recovers_known_slope():
     assert lo < 0.3 < hi
     assert b == pytest.approx(0.3, abs=0.02)
     assert n == 800
+
+
+def test_runtime_wls_matches_statsmodels():
+    import statsmodels.api as sm
+
+    from ui.stats import wls_hc1
+
+    rng = np.random.default_rng(3)
+    x = rng.normal(size=300)
+    y = 1 + 0.5 * x + rng.normal(size=300) * (1 + np.abs(x))
+    w = rng.integers(1, 100, 300)
+    fit = sm.WLS(y, sm.add_constant(x), weights=w).fit(cov_type="HC1")
+    b, (lo, hi), r2, n = wls_hc1(x, y, w)
+    assert b == pytest.approx(fit.params[1])
+    assert lo == pytest.approx(fit.params[1] - 1.96 * fit.bse[1])
+    assert r2 == pytest.approx(fit.rsquared)

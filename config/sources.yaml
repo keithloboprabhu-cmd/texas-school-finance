@@ -14,7 +14,6 @@ tea_sof:
   name: TEA Summary of Finances (SOF)
   publisher: Texas Education Agency
   landing: https://tea.texas.gov/finance-and-grants/state-funding/foundation-school-program/summary-of-finances
-  files: []
   status: 'not used: report app with no bulk download'
   notes: The Summary of Finances is published through TEA's FSP Reports web application (https://tealprod.tea.state.tx.us/Tea.FspReports.Web/),
     one district at a time, with no statewide download. As a result ADA and WADA are not available for every district;
@@ -23,7 +22,6 @@ comptroller_pvs:
   name: Comptroller School District Property Value Study (final findings)
   publisher: Texas Comptroller of Public Accounts
   landing: https://comptroller.texas.gov/taxes/property-tax/pvs/2025f/
-  files: []
   status: verified 2026-11-03
   notes: Final ISD Worksheet Export Summary for tax years 2022-2025 (earlier years have no export). Used for property
     mix; ASGN T2 equals TEA's 'value assigned' for 98-100% of districts.
@@ -31,7 +29,6 @@ tea_recapture:
   name: TEA Excess Local Revenue (recapture) district list
   publisher: Texas Education Agency
   landing: https://tea.texas.gov/about-tea/state-funding/excess-local-revenue
-  files: []
   status: verified 2026-11-03
   notes: Recapture Paid by District, 1993-94 to 2026-27 (2025-26 near-final, 2026-27 preliminary per TEA's footnotes);
     Excess Local Revenue lists for 2025-26 (358 districts; PDF COUNT line checked) and 2026-27 (395).
@@ -48,19 +45,18 @@ tea_tapr:
   name: TEA Texas Academic Performance Reports (district level)
   publisher: Texas Education Agency
   landing: https://rptsvr1.tea.texas.gov/perfreport/tapr/2024/download.html
-  files: []
   status: verified 2026-11-03
   notes: 2023-24 district profile (Advanced Download, PROF); codes from TEA's TAPR data dictionary. 2024-25 not
     yet published.
 census_saipe:
-  name: Census SAIPE school district estimates (API)
+  name: Census SAIPE school district estimates, 2024 (published file)
   publisher: U.S. Census Bureau
   landing: https://www2.census.gov/programs-surveys/saipe/datasets/2024/2024-school-districts/
   status: verified 2026-11-03
   notes: 2024 estimates from Census's published file ussd24.xls (the Data API key was rejected as invalid). 1,017
     Texas districts.
 census_acs:
-  name: Census ACS 5-year estimates by school district (API)
+  name: Census ACS 2020-2024 5-year estimates by school district (summary file)
   publisher: U.S. Census Bureau
   landing: https://www2.census.gov/programs-surveys/acs/summary_file/2024/table-based-SF/
   status: verified 2026-11-03
@@ -70,15 +66,13 @@ nces_boundaries:
   name: NCES EDGE School District Composites SY 2024-25 (TL 2025)
   publisher: National Center for Education Statistics
   landing: https://catalog.data.gov/dataset/school-district-composites-sy-2024-25-tl-25
-  files:
-  - name: EDGE_SCHOOLDISTRICT_TL25_SY2425.zip
-    url: https://nces.ed.gov/programs/edge/data/EDGE_SCHOOLDISTRICT_TL25_SY2425.zip
-  status: not yet downloaded
+  status: verified 2026-11-03
+  notes: 'EDGE_SCHOOLDISTRICT_TL25_SY2425, Texas (STATEFP 48): 1,016 unified, 1 elementary, 1 secondary polygon.
+    ID field GEOID.'
 nces_school_points:
   name: NCES EDGE public school locations 2024-25
   publisher: National Center for Education Statistics
   landing: https://catalog.data.gov/dataset/public-school-locations-2024-25
-  files: []
   status: verified 2026-11-03
   notes: EDGE public school geocodes 2015-16 to 2024-25 (2014-15 not posted). New campus = NCES school ID first
     appearing in a year after 2015-16.
@@ -86,7 +80,6 @@ nces_ccd_lea:
   name: NCES Common Core of Data LEA directory (CDN <-> LEAID crosswalk)
   publisher: National Center for Education Statistics
   landing: https://nces.ed.gov/ccd/files.asp
-  files: []
   status: verified 2026-11-03
   notes: CCD LEA directory 2023-24 (ccd_lea_029_2324_w_1a_073124); ST_LEAID = 'TX-' + CDN.
 brb_bond_elections:
@@ -109,7 +102,6 @@ fred_cpi:
   name: CPI-U, all items (CPIAUCSL)
   publisher: Federal Reserve Bank of St. Louis (FRED), from BLS
   landing: https://fred.stlouisfed.org/series/CPIAUCSL
-  files: []
   status: verified 2026-11-03
   notes: FRED API with key; committed snapshot data/ref/cpi_cpiaucsl_monthly.csv as fallback. School-year average
     = July-June.

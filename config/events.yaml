@@ -1,7 +1,16 @@
 # Law-change markers for the Equity Over Time page.
-# Rule: a marker is shown only if it has a primary-source URL that has been checked.
-# Format:
-#   - date: YYYY-MM-DD
-#     label: short label shown on charts
-#     source: primary-source URL (statute, TLO bill page or TEA)
-events: []
+# Rule: a marker is shown only with a primary-source URL that has been checked.
+# school_year = first school year (ending year) the law could affect.
+events:
+  - date: 2019-06-12
+    school_year: 2020
+    label: HB 3 (86th Leg.)
+    description: 'Enrolled caption: "Relating to public school finance and public education"'
+    source: https://capitol.texas.gov/BillLookup/History.aspx?LegSess=86R&Bill=HB3
+    checked: 2026-11-03
+  - date: 2025-06-20
+    school_year: 2026
+    label: HB 2 (89th Leg.)
+    description: 'Enrolled caption: "Relating to public education and public school finance"'
+    source: https://capitol.texas.gov/BillLookup/History.aspx?LegSess=89R&Bill=HB2
+    checked: 2026-11-03
