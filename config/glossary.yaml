@@ -46,3 +46,18 @@ cib:
 refunding:
   label: Refunding
   definition: Issuing new bonds to refinance existing debt, as opposed to new-money bonds for new projects.
+huber:
+  label: Huber robust regression
+  definition: A regression that down-weights observations with large residuals, used here to check whether outlier rankings depend on a few extreme districts.
+property_wealth:
+  label: Property wealth per student
+  definition: The Comptroller-certified taxable property value used for school funding, divided by fall enrollment.
+recapture_designated:
+  label: Chapter 41/49 designation
+  definition: TEA's flag that a district's local revenue exceeded its entitlement in that year, as shown in TEA's Recapture Paid by District file.
+real_dollars:
+  label: Real dollars
+  definition: Dollars adjusted for inflation with CPI-U (school-year average, July-June) and expressed in dollars of the latest school year.
+proxy:
+  label: Proxy
+  definition: An indirect measure. Texas publishes no statewide dataset of school construction cost per square foot, so capital spending per new student or per new campus is shown instead and labelled as a proxy.

@@ -15,7 +15,7 @@ The full build spec lives in the owner's prompt; this file records the conventio
 - CDNs are 6-digit zero-padded **strings**, never integers.
 
 ## Layout
-- `app.py` + `pages/`: Streamlit app (top navigation). Reads only `data/marts/*.parquet`
+- `app.py` + `app_pages/`: Streamlit app (top navigation). Reads only `data/marts/*.parquet`
   and `data/geo/*.geojson`.
 - `ui/`: theme tokens (`theme.py`), CSS (`assets/app.css`), components, data access, SQL Lab guard.
 - `pipeline/ingest/`: downloaders (shared `_http.py`: retries, User-Agent, cache, checksum log).

@@ -53,3 +53,28 @@ abbr.ll-term { text-decoration: underline dotted var(--ink-2); text-underline-of
   .block-container, [data-testid="stMainBlockContainer"] { padding-left: 16px; padding-right: 16px; }
   h1 { font-size: 2.25rem !important; }
 }
+
+/* Legends, reading lines, cards */
+.ll-reading { color: var(--ink-2); font-size: 0.9rem; margin: 0.25rem 0 0.5rem; }
+.ll-legend { border-top: 1px solid var(--rule); padding-top: 0.5rem; font-size: 0.85rem; }
+.ll-leg-title { font-weight: 600; margin-bottom: 0.35rem; }
+.ll-leg-item { display: flex; align-items: center; gap: 0.5rem; font-family: var(--mono); font-size: 0.8rem; line-height: 1.6; }
+.ll-legend .sw { display: inline-block; width: 14px; height: 14px; border: 1px solid rgba(0,0,0,0.15); }
+.ll-div { display: flex; } .ll-div .sw { width: 28px; height: 12px; border: 0; }
+.ll-div-labels { display: flex; justify-content: space-between; width: 196px; font-size: 0.8rem; color: var(--ink-2); }
+.ll-bivar { display: flex; gap: 0.9rem; align-items: flex-start; }
+.ll-bivar .grid { display: grid; grid-template-columns: repeat(3, 22px); grid-template-rows: repeat(3, 22px); gap: 2px; }
+.ll-bivar .grid span { display: block; }
+.ll-bivar .axes { font-size: 0.82rem; line-height: 1.5; }
+.ll-metric .note { font-size: 0.8rem; color: var(--ink-2); font-family: var(--mono); }
+.ll-finding { border-top: 1px solid var(--ink); padding-top: 0.75rem; }
+.ll-finding .num { font-family: var(--serif); font-size: 2.6rem; line-height: 1; color: var(--ink-2); }
+.ll-finding p { margin: 0.5rem 0; }
+.ll-source { font-size: 0.8rem; color: var(--ink-2); border-top: 1px solid var(--rule); padding-top: 0.35rem; font-family: var(--mono); }
+.ll-mapframe { border: 1px solid var(--ink); padding: 4px; }
+.ll-panel { border-left: 1px solid var(--rule); padding-left: 1.25rem; }
+.ll-tourcard { background: var(--card); border: 1px solid var(--rule); border-left: 3px solid var(--clay); padding: 0.9rem 1.1rem; }
+.ll-tourcard .step { font-family: var(--mono); font-size: 0.8rem; color: var(--ink-2); }
+.ll-tourcard .big { font-family: var(--mono); font-size: 1.8rem; }
+
+[data-testid="stDeckGlJsonChart"] { border: 1px solid var(--ink); }
