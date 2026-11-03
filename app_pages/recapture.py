@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pandas as pd
 import plotly.graph_objects as go
 import pydeck as pdk
 import streamlit as st
@@ -74,12 +75,24 @@ with left:
     rd2 = rd.dropna(subset=["lat"]).copy()
     mx = rd2.recapture_paid.max()
     rd2["w"] = 0.6 + 7 * (rd2.recapture_paid / mx) ** 0.5
-    rd2["tip"] = [
-        f"<b>{nice(n)}</b><br/>{money(p)} paid<br/>{money(s)} per student"
-        for n, p, s in zip(
-            rd2.district_name, rd2.recapture_paid, rd2.recapture_per_student_real, strict=True
+    rd2 = rd2.join(
+        pd.DataFrame(
+            [
+                maps.tip(
+                    nice(n),
+                    f"Sent {money(p)} of local tax revenue to the state",
+                    f"That is {money(s)} per student",
+                )
+                for n, p, s in zip(
+                    rd2.district_name,
+                    rd2.recapture_paid,
+                    rd2.recapture_per_student_real,
+                    strict=True,
+                )
+            ],
+            index=rd2.index,
         )
-    ]
+    )
     rd2["path"] = [
         maps.flat_arc((lon, lat), maps.CAPITOL) for lon, lat in zip(rd2.lon, rd2.lat, strict=True)
     ]
@@ -123,7 +136,7 @@ with left:
         maps.deck(
             [outline, arcs, dots, capitol],
             pdk.ViewState(latitude=31.1, longitude=-99.4, zoom=4.75, pitch=20),
-            "{tip}",
+            "default",
             height=560,
         )
     )

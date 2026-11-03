@@ -1,4 +1,4 @@
-# Lone Star Ledger
+# <img src="assets/lone-star.svg" width="40" alt=""> Lone Star Education Ledger
 
 **Texas School Finance Atlas.** How does per-student spending track district property wealth in Texas, and which
 districts are the outliers? An interactive atlas of every Texas school district's wealth, spending, recapture, debt and

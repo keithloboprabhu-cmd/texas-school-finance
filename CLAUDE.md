@@ -1,4 +1,4 @@
-# Lone Star Ledger: notes for Claude Code
+# Lone Star Education Ledger: notes for Claude Code
 
 Texas school finance atlas: Streamlit app over a Python -> pandas -> DuckDB -> SQL pipeline.
 The full build spec lives in the owner's prompt; this file records the conventions.

@@ -104,16 +104,23 @@ def overlay_layer(geo: dict, layer_id: str, color=(27, 26, 23, 110), width=1.2) 
 def deck(layers, view=TX_VIEW, tooltip_html: str | None = None, height: int = 620) -> pdk.Deck:
     tooltip = None
     if tooltip_html:
+        if tooltip_html == "default":
+            tooltip_html = TOOLTIP_HTML
         tooltip = {
             "html": tooltip_html,
             "style": {
                 "backgroundColor": "#FBF8F2",
                 "color": "#1B1A17",
                 "border": "1px solid #D9D2C3",
-                "fontFamily": "JetBrains Mono, monospace",
+                "fontFamily": "Inter Tight, system-ui, sans-serif",
                 "fontSize": "13px",
-                "padding": "8px 10px",
+                "lineHeight": "1.45",
+                "padding": "8px 12px",
                 "borderRadius": "4px",
+                "maxWidth": "300px",
+                "whiteSpace": "normal",
+                "overflowWrap": "anywhere",
+                "boxShadow": "0 1px 4px rgba(27,26,23,0.12)",
             },
         }
     return CompactDeck(
@@ -157,3 +164,25 @@ class CompactDeck(pdk.Deck):
         from pydeck.bindings.json_tools import default_serialize
 
         return json.dumps(self, sort_keys=True, default=default_serialize, separators=(",", ":"))
+
+
+# Shared hover card: formatting lives in this template, values are plain text (deck.gl escapes values,
+# so HTML inside them would show as raw tags). Width is capped and long lines wrap.
+TIP_KEYS = ["tt0", "tt1", "tt2", "tt3", "tt4"]
+TOOLTIP_HTML = (
+    '<div style="font-family:Inter Tight,system-ui,sans-serif;font-weight:600;font-size:14px;margin-bottom:4px">'
+    "{tt0}</div><div>{tt1}</div><div>{tt2}</div><div>{tt3}</div><div>{tt4}</div>"
+)
+
+
+def tip(title: str, *lines: str) -> dict:
+    """Hover-card fields: a title plus up to four plain-language lines."""
+    vals = [title, *lines] + [""] * (len(TIP_KEYS) - 1 - len(lines))
+    return dict(zip(TIP_KEYS, vals[: len(TIP_KEYS)], strict=True))
+
+
+def cents_per_100(rate) -> str:
+    """Tax rate per $100 of value, as plain English: 0.33 -> '33¢ per $100 of property value'."""
+    if rate is None or rate != rate:
+        return "not reported"
+    return f"{rate * 100:.1f}¢ per $100 of property value"

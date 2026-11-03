@@ -63,3 +63,19 @@ def html(markup: str) -> None:
     """
     safe = markup.replace("$", "&#36;").replace("\n", " ")
     st.markdown(safe, unsafe_allow_html=True)
+
+
+@cache
+def _star_svg() -> str:
+    return (ROOT / "assets" / "lone-star.svg").read_text(encoding="utf-8")
+
+
+def brand_bar() -> None:
+    """Site title with the lone-star mark, shown above every page."""
+    html(
+        '<div class="ll-brand">'
+        f'<span class="ll-brand-star" aria-hidden="true">{_star_svg()}</span>'
+        '<span class="ll-brand-name">Lone Star Education Ledger</span>'
+        '<span class="ll-brand-sub">Texas School Finance Atlas</span>'
+        "</div>"
+    )

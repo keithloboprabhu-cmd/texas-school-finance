@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pandas as pd
 import plotly.graph_objects as go
 import pydeck as pdk
 import streamlit as st
@@ -92,14 +93,17 @@ geo = maps.features_with(
     ["cdn", "district_name", "growth_10y"],
 )
 vals = [f["properties"]["growth_10y"] for f in geo["features"]]
-import pandas as pd  # noqa: E402
 
 cols = maps.diverging_colors(pd.Series(vals, dtype=float), 0.0)
 for f, c in zip(geo["features"], cols, strict=True):
     f["properties"]["fill"] = c[:3] + [150]
-    f["tip"] = (
-        f"<b>{nice(f['properties']['district_name'])}</b><br/>10-yr growth {pct(f['properties']['growth_10y'])}"
+    g10 = f["properties"]["growth_10y"]
+    line = (
+        "No enrollment history"
+        if g10 is None or g10 != g10
+        else (f"Enrollment {'grew' if g10 >= 0 else 'shrank'} {abs(g10):.0%} over 10 years")
     )
+    f.update(maps.tip(nice(f["properties"]["district_name"]), line))
 fill = pdk.Layer(
     "GeoJsonLayer",
     geo,
@@ -133,7 +137,7 @@ with left:
         maps.deck(
             [fill, hexes],
             pdk.ViewState(latitude=30.9, longitude=-98.2, zoom=5.3, pitch=40, bearing=-8),
-            "{tip}",
+            "default",
             height=580,
         )
     )

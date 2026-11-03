@@ -5,6 +5,7 @@ from __future__ import annotations
 import html
 
 import numpy as np
+import pandas as pd
 import plotly.graph_objects as go
 import pydeck as pdk
 import streamlit as st
@@ -376,10 +377,17 @@ with g2:
     cp = data.query("district_campuses", cdn=cdn)
     if len(cp):
         cp["color"] = [[168, 67, 42, 230] if n else [27, 26, 23, 160] for n in cp.is_new]
-        cp["tip"] = [
-            f"{html.escape(s.title())} (first listed {sy(int(y))})"
-            for s, y in zip(cp.school_name, cp.first_year, strict=True)
-        ]
+        cp = cp.join(
+            pd.DataFrame(
+                [
+                    maps.tip(
+                        s.title(), f"Opened in {sy(int(y))}" if n else "Open since at least 2015-16"
+                    )
+                    for s, y, n in zip(cp.school_name, cp.first_year, cp.is_new, strict=True)
+                ],
+                index=cp.index,
+            )
+        )
         st.pydeck_chart(
             maps.deck(
                 [
@@ -396,7 +404,7 @@ with g2:
                 pdk.ViewState(
                     latitude=float(cp.lat.mean()), longitude=float(cp.lon.mean()), zoom=9.5
                 ),
-                "{tip}",
+                "default",
                 height=260,
             )
         )

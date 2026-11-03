@@ -40,7 +40,7 @@ LAYERS = data.config("metrics")["layers"]
 VIEWS = ["Bivariate", "Single metric", "3D Wealth Relief"]
 
 page_header(
-    "Lone Star Ledger · Texas School Finance Atlas",
+    "Atlas · Texas school districts",
     "Where the money goes in Texas schools",
     "Property wealth, spending, recapture, debt and growth for every Texas school district. "
     "Click a district to see its numbers.",
@@ -103,7 +103,7 @@ search = st.selectbox(
 # ---------------------------------------------------------------- colours
 fmt_map = {
     "money": money,
-    "money_k": lambda v: "n/a" if pd.isna(v) else f"${v / 1000:,.0f}K",
+    "money_k": big_money,
     "pct": pct,
     "rate": lambda v: "n/a" if pd.isna(v) else f"{v:.4f}",
     "num": lambda v: "n/a" if pd.isna(v) else f"{v:,.1f}",
@@ -131,26 +131,55 @@ else:
         breaks = maps.quantile_breaks(nonzero)
         df["fill"] = maps.class_colors(maps.classify(nonzero, breaks), SEQUENTIAL_7)
 
-df["tip"] = [
-    f"<b>{html.escape(nice(r.district_name))}</b><br/>{html.escape(str(r.county).title())} · "
-    f"{'' if pd.isna(r.enrollment) else f'{r.enrollment:,.0f} students'}<br/>"
-    f"Wealth/student {fmt_map['money_k'](r.wealth_per_student)}<br/>"
-    f"Spending/student {money(r.op_per_student)}<br/>"
-    + (
-        f"{LAYERS[metric]['label']}: {fmt_map[LAYERS[metric]['fmt']](getattr(r, LAYERS[metric]['column']))}"
-        if view == "Single metric"
-        else ""
+med_spend = df.op_per_student.median()
+
+
+def metric_line(r) -> str:
+    """Plain-English line for the selected single-metric layer."""
+    v = getattr(r, LAYERS[metric]["column"])
+    if pd.isna(v):
+        return f"{LAYERS[metric]['label']}: no data"
+    if metric == "is_rate":
+        return f"Debt tax rate: {maps.cents_per_100(v)}"
+    if metric == "residual":
+        side = "more" if v > 0 else "less"
+        return f"Spends {side} than districts like it would be expected to (score {v:+.1f})"
+    if metric == "recapture":
+        return (
+            "Sends no money to the state"
+            if v == 0
+            else f"Sends {money(v)} per student to the state"
+        )
+    if metric == "growth":
+        return f"Enrollment {'grew' if v >= 0 else 'shrank'} {abs(v):.0%} in 5 years"
+    if metric == "new_campuses":
+        return f"{v:.0f} new campuses since 2016-17"
+    return f"{LAYERS[metric]['label']}: {fmt_map[LAYERS[metric]['fmt']](v)}"
+
+
+tips = []
+for r in df.itertuples():
+    who = str(r.county).title() + (
+        "" if pd.isna(r.enrollment) else f" · {r.enrollment:,.0f} students"
     )
-    for r in df.itertuples()
-]
+    spend = f"Spends {money(r.op_per_student)} per student (Texas median {money(med_spend)})"
+    prop = f"Taxable property: {fmt_map['money_k'](r.wealth_per_student)} per student"
+    last = (
+        metric_line(r)
+        if view == "Single metric"
+        else f"Typical household income: {fmt_map['money_k'](r.median_household_income)}"
+    )
+    tips.append(maps.tip(nice(r.district_name), who, spend, prop, last))
+df = df.join(pd.DataFrame(tips, index=df.index))
 
 geo = maps.features_with(
     data.geojson("tx_districts_simplified"),
     df,
-    ["cdn", "district_name", "fill", "tip"] + (["elev"] if "elev" in df else []),
+    ["cdn", "district_name", "fill", *maps.TIP_KEYS] + (["elev"] if "elev" in df else []),
 )
 for f in geo["features"]:
-    f["tip"] = f["properties"].pop("tip")  # deck.gl tooltips read top-level keys; keep one copy
+    for k in maps.TIP_KEYS:  # deck.gl tooltips read top-level keys; keep one copy
+        f[k] = f["properties"].pop(k)
 
 layers = []
 if view == "3D Wealth Relief":
@@ -244,7 +273,7 @@ elif view.startswith("3D"):
 left, right = st.columns([3.1, 1], gap="large")
 with left:
     event = st.pydeck_chart(
-        maps.deck(layers, view_state, "{tip}", height=640),
+        maps.deck(layers, view_state, "default", height=640),
         on_select="rerun",
         selection_mode="single-object",
         key=f"atlas_{view}_{metric}_{year}",
@@ -414,7 +443,7 @@ with f2:
         )
     )
     fig.update_xaxes(type="log", title="students (log)")
-    fig.update_layout(yaxis_title="std. residual", margin=dict(t=10))
+    fig.update_layout(yaxis_title="above or below prediction", margin=dict(t=10))
     charts.show(fig, height=180, key="f2")
     st.page_link("app_pages/wealth_spending.py", label="Explore →")
 with f3:

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pandas as pd
 import plotly.graph_objects as go
 import pydeck as pdk
 import streamlit as st
@@ -87,12 +88,26 @@ with left:
     sk["elev"] = sk.debt_per_student.clip(upper=cap) / cap * 220_000
     br = maps.quantile_breaks(sk.is_rate)
     sk["color"] = maps.class_colors(maps.classify(sk.is_rate, br), SEQUENTIAL_7)
-    sk["tip"] = [
-        f"<b>{nice(n)}</b><br/>debt/student {money(d)}<br/>I&S rate {r:.4f}"
-        if r == r
-        else f"<b>{nice(n)}</b>"
-        for n, d, r in zip(sk.district_name, sk.debt_per_student, sk.is_rate, strict=True)
-    ]
+    sk = sk.join(
+        pd.DataFrame(
+            [
+                maps.tip(
+                    nice(n),
+                    f"Owes {money(d)} per student in voter-approved debt",
+                    f"Total owed: {big_money(p)}",
+                    f"Debt tax rate: {maps.cents_per_100(r)}",
+                )
+                for n, d, p, r in zip(
+                    sk.district_name,
+                    sk.debt_per_student,
+                    sk.tax_supported_principal,
+                    sk.is_rate,
+                    strict=True,
+                )
+            ],
+            index=sk.index,
+        )
+    )
     cols = pdk.Layer(
         "ColumnLayer",
         sk,
@@ -110,7 +125,7 @@ with left:
         maps.deck(
             [outline, cols],
             pdk.ViewState(latitude=30.0, longitude=-99.2, zoom=5.0, pitch=50, bearing=-10),
-            "{tip}",
+            "default",
             height=560,
         )
     )
@@ -134,7 +149,7 @@ with left:
     )
     view_sql("debt_districts")
 with right:
-    legend_quantile("I&S tax rate (per $100)", br, lambda v: f"{v:.3f}")
+    legend_quantile("Debt tax rate (I&S), per $100 of value", br, lambda v: f"{v * 100:.1f}¢")
     st.markdown("**Largest debt loads**")
     st.dataframe(
         dd.head(10)[["district_name", "tax_supported_principal", "debt_per_student"]],

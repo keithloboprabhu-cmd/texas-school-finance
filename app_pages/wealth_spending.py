@@ -222,7 +222,7 @@ def outlier_table(sub: pd.DataFrame, key: str):
         column_config={
             "actual": st.column_config.NumberColumn("actual $/student", format="localized"),
             "predicted": st.column_config.NumberColumn("predicted", format="localized"),
-            "std_residual": st.column_config.NumberColumn("std. residual", format="%.2f"),
+            "std_residual": st.column_config.NumberColumn("vs. prediction (score)", format="%+.1f"),
             "hint": st.column_config.TextColumn("why it might be", width="large"),
             "profile": st.column_config.LinkColumn("profile", display_text="open →"),
         },

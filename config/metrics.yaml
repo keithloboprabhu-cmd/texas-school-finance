@@ -1,95 +1,98 @@
-# Map layers and metric labels. Adding a metric: add a column to one mart, add it to
-# sql/app/atlas_layers.sql, then describe it here.
-# fmt: money | pct | rate | num | money_k ; palette: sequential | diverging (centred on the state median)
 layers:
   wealth:
     theme: Wealth
-    label: Property wealth per student
+    label: Taxable property per student
     column: wealth_per_student
     fmt: money_k
     palette: sequential
-    read: Certified taxable property value (used for school funding) divided by fall enrollment. Darker = more wealth per student.
+    read: How much taxable property sits behind each student; the base a district can tax. Darker = more.
   income:
     theme: Wealth
-    label: Median household income
+    label: Typical household income
     column: median_household_income
     fmt: money_k
     palette: sequential
-    read: ACS 2020-2024 5-year median household income of residents. Top-coded at $250,000.
+    read: Median income of households living in the district (Census, 2020-2024). Capped by the Census at $250,000.
   mineral:
     theme: Wealth
-    label: Mineral share of property value
+    label: Share of property that is oil, gas and minerals
     column: mineral_share
     fmt: pct
     palette: sequential
-    read: Share of a district's property value that is oil, gas and other minerals (PTAD category G).
+    read: How much of the district's tax base is oil, gas and other minerals rather than homes or businesses.
   spending:
     theme: Spending
-    label: Operating spending per student
+    label: Spending per student
     column: op_per_student
     fmt: money
     palette: diverging
-    read: Real operating spending per student versus the state median. Clay = above, teal = below.
+    read: Day-to-day spending per student compared with the Texas median. Clay = above, teal = below. Excludes debt
+      payments, construction and money sent to the state.
   residual:
     theme: Spending
-    label: Spending vs. prediction (latest year)
+    label: Spending vs. similar districts
     column: std_residual
     fmt: num
     palette: diverging
-    read: How far a district's spending sits above (clay) or below (teal) what its wealth, size, need and locale predict.
+    read: Clay = spends more than districts with similar wealth, size, student needs and setting; teal = spends
+      less.
   recapture:
     theme: Recapture
-    label: Recapture paid per student
+    label: Money sent to the state per student
     column: recapture_per_student
     fmt: money
     palette: sequential
-    read: Local revenue sent to the state in the selected year, per student. Grey = paid none.
+    read: Local property-tax money a wealthy district must send to the state ("recapture"), per student. Grey =
+      sends none.
   debt:
     theme: Debt
-    label: Tax-supported debt per student
+    label: Debt per student
     column: debt_per_student
     fmt: money_k
     palette: sequential
-    read: Tax-supported (GO) principal outstanding at the end of the latest fiscal year, per enrolled student.
+    read: Voter-approved school debt still owed at the end of the last fiscal year, per student.
   is_rate:
     theme: Debt
-    label: I&S (debt) tax rate
+    label: Debt tax rate
     column: is_rate
     fmt: rate
     palette: sequential
-    read: Adopted interest-and-sinking tax rate per $100 of taxable value.
+    read: The part of the school property tax that repays bonds (the "I&S" rate), in dollars per $100 of property
+      value.
   cab:
     theme: Debt
-    label: CAB share of principal
+    label: Share of debt in deferred-interest bonds
     column: cab_share
     fmt: pct
     palette: sequential
-    read: Share of outstanding principal in capital appreciation bonds (interest deferred to maturity).
+    read: Share of debt in capital appreciation bonds (CABs), which put off all interest until the end and cost
+      more.
   growth:
     theme: Growth
-    label: 5-year enrollment change
+    label: Enrollment change, 5 years
     column: growth_5y
     fmt: pct
     palette: diverging_zero
-    read: Change in fall enrollment over five years. Clay = growing, teal = shrinking.
+    read: How much enrollment grew (clay) or shrank (teal) over five years.
   new_campuses:
     theme: Growth
     label: New campuses since 2016-17
     column: new_campuses
     fmt: num
     palette: sequential
-    read: Campuses whose NCES school ID first appears in 2016-17 or later and that are still open.
+    read: Schools that first opened in 2016-17 or later and are still open.
   poverty:
     theme: Need
-    label: Child poverty rate
+    label: Children in poverty
     column: child_poverty_rate
     fmt: pct
     palette: sequential
-    read: Census SAIPE 2024 share of children 5-17 in families below the poverty line.
+    read: Share of children aged 5-17 living below the poverty line (Census estimate, 2024).
   econ:
     theme: Need
-    label: Economically disadvantaged
+    label: Students from low-income families
     column: econ_disadv_pct
     fmt: pct
     palette: sequential
-    read: TEA TAPR 2023-24 share of students identified as economically disadvantaged.
+    read: Share of students TEA counts as economically disadvantaged, mostly those eligible for free or reduced-price
+      meals (2023-24).

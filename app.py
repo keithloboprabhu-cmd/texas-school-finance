@@ -1,15 +1,17 @@
-"""Lone Star Ledger: Texas School Finance Atlas. Streamlit entry point."""
+"""Lone Star Education Ledger: Texas School Finance Atlas. Streamlit entry point."""
 
 import streamlit as st
 
-from ui.theme import apply_theme
+from ui.theme import apply_theme, brand_bar
 
 st.set_page_config(
-    page_title="Lone Star Ledger · Texas School Finance Atlas",
+    page_title="Lone Star Education Ledger · Texas School Finance Atlas",
+    page_icon="assets/lone-star.svg",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
 apply_theme()
+st.logo("assets/lone-star.svg", size="large", icon_image="assets/lone-star.svg")
 
 PAGES = [
     st.Page("app_pages/atlas.py", title="Atlas", url_path="atlas", default=True),
@@ -23,4 +25,6 @@ PAGES = [
     st.Page("app_pages/methodology.py", title="Methodology & Data", url_path="methodology"),
 ]
 
-st.navigation(PAGES, position="top").run()
+page = st.navigation(PAGES, position="top")
+brand_bar()
+page.run()
