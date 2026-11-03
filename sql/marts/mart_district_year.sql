@@ -1,0 +1,58 @@
+-- One row per district and school year: current analysis districts (ISD/common district with a
+-- boundary) plus consolidated/closed districts for the years they reported (is_current = FALSE).
+-- Dollars: nominal and real (CPI-U, July-June school-year average, in dollars of the latest
+-- PEIMS year). Per-student figures divide by fall enrollment (`enrollment`).
+CREATE OR REPLACE TABLE mart_district_year AS
+WITH latest AS (SELECT max(year) AS y FROM fct_spending_district_year),
+cpi AS (
+  SELECT c.year, (SELECT cpi FROM stg_cpi WHERE year = (SELECT y FROM latest)) / c.cpi AS real_factor
+  FROM stg_cpi c
+)
+SELECT
+  d.cdn, s.year, d.in_analysis AS is_current, d.district_name, d.county, d.esc_region, d.locale, d.locale_detail, d.is_metro,
+  e.enrollment,
+  e.enrollment < 500 AS small_district,
+  cpi.real_factor,
+  -- spending (nominal)
+  s.operating, s.operating_tea_def, s.ssa_agent_operating,
+  s.debt_service, s.capital, s.recapture_fn91, s.intergovernmental,
+  -- per student, real dollars
+  s.operating * cpi.real_factor / nullif(e.enrollment, 0)                 AS op_per_student_real,
+  s.operating / nullif(e.enrollment, 0)                                   AS op_per_student_nominal,
+  s.op_instruction * cpi.real_factor / nullif(e.enrollment, 0)            AS instruction_per_student_real,
+  s.op_instructional_support * cpi.real_factor / nullif(e.enrollment, 0)  AS instructional_support_per_student_real,
+  s.op_school_leadership * cpi.real_factor / nullif(e.enrollment, 0)      AS school_leadership_per_student_real,
+  s.op_student_support * cpi.real_factor / nullif(e.enrollment, 0)        AS student_support_per_student_real,
+  s.op_transportation * cpi.real_factor / nullif(e.enrollment, 0)         AS transportation_per_student_real,
+  s.op_food_service * cpi.real_factor / nullif(e.enrollment, 0)           AS food_service_per_student_real,
+  s.op_extracurricular * cpi.real_factor / nullif(e.enrollment, 0)        AS extracurricular_per_student_real,
+  s.op_general_administration * cpi.real_factor / nullif(e.enrollment, 0) AS general_administration_per_student_real,
+  s.op_plant_maintenance_security * cpi.real_factor / nullif(e.enrollment, 0) AS plant_maintenance_security_per_student_real,
+  s.op_data_processing * cpi.real_factor / nullif(e.enrollment, 0)        AS data_processing_per_student_real,
+  s.op_community_services * cpi.real_factor / nullif(e.enrollment, 0)     AS community_services_per_student_real,
+  s.capital * cpi.real_factor / nullif(e.enrollment, 0)                   AS capital_per_student_real,
+  s.debt_service * cpi.real_factor / nullif(e.enrollment, 0)              AS debt_service_per_student_real,
+  -- revenue mix
+  r.rev_local, r.rev_state, r.rev_federal, r.rev_total,
+  r.rev_local / nullif(r.rev_total, 0)   AS share_local,
+  r.rev_state / nullif(r.rev_total, 0)   AS share_state,
+  r.rev_federal / nullif(r.rev_total, 0) AS share_federal,
+  -- property wealth
+  w.tax_year, w.property_value, w.value_source,
+  w.property_value * cpi.real_factor / nullif(e.enrollment, 0)            AS wealth_per_student_real,
+  w.property_value / nullif(e.enrollment, 0)                              AS wealth_per_student_nominal,
+  -- recapture (TEA "Recapture Paid by District"; zero when not listed)
+  coalesce(rp.recapture_paid, 0)                                          AS recapture_paid,
+  coalesce(rp.recapture_paid, 0) * cpi.real_factor / nullif(e.enrollment, 0) AS recapture_per_student_real,
+  coalesce(rp.designated, FALSE)                                          AS recapture_designated,
+  -- tax rates
+  t.mo_rate, t.is_rate
+FROM dim_district d
+JOIN fct_spending_district_year s USING (cdn)
+LEFT JOIN fct_enrollment_district_year e USING (cdn, year)
+LEFT JOIN fct_revenue_district_year r USING (cdn, year)
+LEFT JOIN fct_wealth_district_year w USING (cdn, year)
+LEFT JOIN stg_recapture_paid rp USING (cdn, year)
+LEFT JOIN stg_tax_rates t USING (cdn, year)
+LEFT JOIN cpi USING (year)
+WHERE d.in_analysis OR d.is_closed_isd;
