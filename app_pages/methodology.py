@@ -14,8 +14,8 @@ latest = int(data.query("meta_years").year.max())
 page_header(
     "Methodology & Data",
     "Sources, definitions and caveats",
-    "Every number in this atlas comes from the pipeline in this repository (python -m pipeline.build). "
-    "This page lists where the data comes from, what was verified, and what is not known.",
+    "Every number on this site comes from the code in this project's repository (python -m pipeline.build). "
+    "This page lists where the data comes from, how we checked it, and what we don't know.",
 )
 
 # ---------------------------------------------------------------- sources
@@ -27,7 +27,7 @@ st.dataframe(
             {
                 "Source": s["name"],
                 "Publisher": s["publisher"],
-                "Status / as of": s.get("status", ""),
+                "Status (date checked)": s.get("status", ""),
                 "Notes": s.get("notes", ""),
                 "Link": s["landing"],
             }
@@ -43,21 +43,24 @@ st.dataframe(
 )
 
 rule()
-st.subheader("Unit, universe and identifiers", anchor=False)
+st.subheader("What's counted and how districts are matched", anchor=False)
 st.markdown(
     md_money(f"""
-- **Unit:** Texas school district × school year. A year is labelled by the school year it ends: 2025 = 2024-25.
-  TEA's PEIMS actuals use this convention (the 2024-25 single file is TEA's "2024-2025 Financial Actual Data").
-- **Universe:** independent and common school districts with a geographic boundary (1,017 in {sy(latest)}).
-  Twelve districts that consolidated or closed since 2008-09 are kept in statewide history for the years they reported.
-  **Open-enrollment charters** have no boundaries and no local tax base. They are excluded from maps and the wealth analysis
-  and reported separately on Equity Over Time.
-- **Enrollment caution:** 9 districts (for example those enrolling many students on TEA-flagged virtual campuses) are excluded
-  from the model, peers and equity metrics. Rule: at least 25% of October 2025 campus enrollment on virtual campuses, or PEIMS
-  enrollment differing from TEA AskTED's campus total by more than 50% and more than 500 students.
-- **Identifiers:** TEA's 6-digit County-District Number (CDN) is always a zero-padded string. NCES LEAID = Census
-  GEOID = 48 + 5 digits. The crosswalk comes from the NCES CCD LEA directory (ST_LEAID = "TX-" + CDN) and agrees with TEA
-  AskTED for every district. The Bond Review Board's `govid` is the CDN in Comptroller format (037-901-02).
+- **Unit:** one Texas school district in one school year. Years are labeled by the school year they end, so 2025
+  means 2024-25. TEA's PEIMS spending files use the same convention (TEA calls the 2024-25 file "2024-2025
+  Financial Actual Data").
+- **Which districts:** independent and common school districts that have a map boundary ({sy(latest)}: 1,017).
+  Twelve districts that merged or closed since 2008-09 stay in the statewide history for the years they reported.
+  **Open-enrollment charter schools** have no boundaries and collect no local property tax. They're left off the maps
+  and out of the wealth comparisons, and shown separately on Equity Over Time.
+- **Districts left out of the statistics:** 9 districts enroll many students who don't live there, often on
+  TEA-flagged virtual campuses. We leave them out of the model, the similar-district matches and the equity measures.
+  The rule: at least 25% of October 2025 campus enrollment on virtual campuses, or PEIMS enrollment that differs from
+  the campus total in TEA's AskTED directory by more than 50% and more than 500 students.
+- **District IDs:** TEA's 6-digit County-District Number (CDN) is always stored as text with leading zeros. The federal
+  ID (NCES LEAID, the same as the Census GEOID) is 48 plus 5 digits. We match the two using the NCES CCD district
+  directory, where ST_LEAID is "TX-" plus the CDN. The match agrees with TEA's AskTED directory for every district.
+  The Bond Review Board's `govid` is the CDN written the Comptroller's way (037-901-02).
 """)
 )
 
@@ -65,52 +68,62 @@ rule()
 st.subheader("Definitions", anchor=False)
 st.markdown(
     md_money("""
-**Operating spending per student (headline).** All-funds actual expenditures in PEIMS objects 6100-6400 (payroll,
-contracted services, supplies, other operating), in operating functions (11-61, plus 92 and 95, as TEA reports them),
-excluding capital projects funds (6xx). This reproduces TEA's own "total operating expenditures" for at least 99% of
-districts in every year and to 0.000% statewide. The headline then also removes spending in **shared services arrangement
-fiscal-agent funds** (291-379, 431-459), which a fiscal agent spends on behalf of member districts. Divided by PEIMS fall
-enrollment and expressed in real dollars.
+**Spending per student (the main measure).** Day-to-day spending from all funds: PEIMS objects 6100-6400 (payroll,
+contracted services, supplies and other operating costs) in operating functions 11-61, plus 92 and 95 as TEA reports
+them. Capital projects funds (6xx) are left out. This matches TEA's own "total operating expenditures" for at least 99%
+of districts every year, and statewide to 0.000%. We then also remove money a district spends as the fiscal agent for a
+**shared services arrangement** (funds 291-379 and 431-459), because that money is spent on behalf of other districts.
+The total is divided by fall enrollment and adjusted for inflation.
 
-**Excluded from operating spending, with codes** (FASRG Update 20):
-- Function 71, Debt Service, and object 6500 (debt service)
-- Function 81, Facilities Acquisition and Construction, and object 6600 (capital outlay)
-- Function 91, Purchase of WADA to Reduce Excess Local Revenue (**recapture**). Counting it would inflate spending in
-  property-wealthy districts.
-- Functions 93 (payments to shared services fiscal agents), 97 (payments to tax increment funds) and 99 (other intergovernmental)
-- Function 92 is not defined in FASRG Update 20 (**unverified**); TEA groups it with general administration, and so does this project.
+**Left out of spending, with the TEA accounting codes** (FASRG Update 20):
+- Function 71 (debt service) and object 6500 (debt payments)
+- Function 81 (buying land and building facilities) and object 6600 (capital purchases)
+- Function 91 (purchase of WADA to reduce excess local revenue), which is **recapture**. Counting it would make
+  property-wealthy districts look like bigger spenders than they are.
+- Functions 93 (payments to shared services fiscal agents), 97 (payments to tax increment funds) and 99 (other
+  payments to other governments)
+- Function 92 isn't defined in FASRG Update 20, so it is **unverified**. TEA groups it with general administration,
+  and we do the same.
 
-**Property wealth per student.** The Comptroller-certified value "used for school funding" (TEA's PTAD Tax Final files),
-divided by fall enrollment. School year Y is paired with tax year Y−1, the value the district taxes during that school year.
-TEA's own funding lag differs by era: before 2019-20, prior-year values were used. Tax year 2009 is not posted, so
-wealth metrics start in 2010-11. TEA's tax year 2022 file lists 966 districts; the rest come from the Comptroller PVS (ASGN T2),
-which equals TEA's value for 98-100% of districts in overlapping years.
+**Property wealth per student.** The Comptroller's certified value "used for school funding" (from TEA's PTAD Tax
+Final files), divided by fall enrollment. We pair school year Y with tax year Y−1, the values the district taxes during
+that school year. TEA's own timing has changed over the years: before 2019-20, school funding used the prior year's
+values. TEA hasn't posted tax year 2009, so wealth measures start in 2010-11. TEA's tax year 2022 file lists 966
+districts. We fill in the rest from the Comptroller's Property Value Study (ASGN T2), which matches TEA's value for
+98-100% of districts in the years both exist.
 
-**Real dollars.** CPI-U (FRED CPIAUCSL) averaged July-June for each school year, in dollars of the latest school year.
+**Inflation adjustment.** We use the Consumer Price Index (CPI-U, FRED series CPIAUCSL), averaged from July to June for
+each school year, and show dollars as of the latest school year.
 
-**Household income and poverty.** ACS 2020-2024 5-year median household income (top-coded at $250,000) and Census SAIPE
-2024 poverty among children 5-17. Economically disadvantaged, English learner and special education shares: TEA TAPR 2023-24.
+**Household income and poverty.** Median household income comes from the Census ACS 2020-2024 5-year estimates, which cap
+it at $250,000. Child poverty is the Census SAIPE 2024 estimate for children 5-17. The shares of students who are from
+low-income families (TEA's "economically disadvantaged"), English learners or in special education come from TEA's TAPR
+reports for 2023-24.
 
-**Denominators.** Fall enrollment throughout. ADA and WADA are not available in bulk: TEA's Summary of Finances is a
-one-district-at-a-time report application. Cost adjustment (NCES ACS-CWIFT) is not applied.
+**Per student.** We divide by fall enrollment everywhere. TEA's attendance-based counts (ADA and WADA) aren't available
+for all districts in one file: the Summary of Finances only shows one district at a time. We don't adjust for regional
+price differences (the NCES ACS-CWIFT index).
 
-**Small districts.** Under 500 students. Flagged, never dropped, with an option to hide them on Wealth & Spending.
+**Small districts.** Fewer than 500 students. We flag them and never drop them. Wealth & Spending lets you hide them.
 
-**Statistics.** Equity metrics are enrollment-weighted. Wealth elasticity = slope of log spending on log wealth (WLS,
-enrollment weights, HC1 robust errors). The controlled model adds log enrollment, economically disadvantaged, English learner
-and special education shares, locale and log students per square mile. Outliers are ranked by standardized residual, with
-a Huber robust regression as a sensitivity check. McLoone = spending on students below the median divided by what they
-would get at the median.
+**Statistics.** Statewide measures are weighted by enrollment. "How much spending rises with wealth" (the wealth
+elasticity) is the slope of a line fitted to log spending and log wealth, weighted by enrollment, with robust (HC1)
+errors. The fuller model also accounts for log enrollment, the shares of low-income students, English learners and
+special education students, setting (city, suburb, town or rural) and log students per square mile. We rank districts by
+how far they land from that model's prediction, and check the ranking with a Huber robust regression. The McLoone index
+divides what students below the median actually get by what they'd get if they were all at the median.
 
-**Debt.** Texas Bond Review Board, state fiscal year (Sept-Aug). Tax-supported = GO pledge. Debt per ADA follows BRB's
-measure. The "maturity" chart groups remaining debt service by each issue's final maturity year; it is not an annual
-payment schedule, which BRB does not publish in bulk.
+**Debt.** From the Texas Bond Review Board, by state fiscal year (September to August). We count debt repaid from
+property taxes (general obligation bonds). Debt per ADA follows the Bond Review Board's own measure. The "paid off" chart
+groups remaining debt payments by each bond's final year. It isn't a year-by-year payment schedule, because the Bond
+Review Board doesn't publish those in bulk.
 
-**New campuses.** An NCES school ID first appearing after the 2015-16 baseline (EDGE geocodes 2015-16 to 2024-25). A
-new ID can mean a reorganised campus. For 76% of new ISD campuses with an AskTED status date, that date is within a year.
+**New campuses.** A school whose federal (NCES) ID first appears after 2015-16, using NCES school locations from 2015-16
+to 2024-25. A new ID can also mean an existing school was reorganized. For 76% of new district campuses that TEA's
+AskTED directory dates, TEA's date is within a year of the federal listing.
 
-**Construction cost.** Texas has no statewide cost-per-square-foot dataset, so none is shown. Capital spending per student
-added and per new campus are labelled **proxies**.
+**Construction cost.** Texas has no statewide data on cost per square foot, so we don't show one. Building spending per
+student added and per new campus are labeled as **proxies**.
 """)
 )
 
@@ -118,34 +131,35 @@ rule()
 st.subheader("Quality checks", anchor=False)
 c1, c2 = st.columns(2, gap="large")
 with c1:
-    st.markdown("**Reconciliation with TEA published totals**")
+    st.markdown("**Do our totals match TEA's?**")
     st.markdown((QA / "reconciliation.md").read_text().split("\n", 2)[2])
     un = pd.read_csv(QA / "unmatched.csv", dtype=str)
     st.markdown(
-        f"**Crosswalk:** 1,017 of 1,019 ISDs reporting PEIMS in {sy(latest)} match boundaries, SAIPE and ACS "
-        f"(99.8%). {len(un)} directory districts have no boundary:"
+        f"**District matching:** 1,017 of the 1,019 districts that reported spending in {sy(latest)} match a map "
+        f"boundary and Census data (99.8%). {len(un)} districts in TEA's directory have no boundary:"
     )
     st.dataframe(un[["cdn", "district_name", "reason"]], hide_index=True, width="stretch")
 with c2:
-    st.markdown("**District spot checks**")
+    st.markdown("**Spot checks on five districts**")
     st.markdown((QA / "spot_checks.md").read_text().split("\n", 2)[2])
-    st.markdown("**Colour-vision check**")
+    st.markdown("**Color-blindness check**")
     st.markdown((QA / "palette_check.md").read_text().split("\n", 2)[2])
 
 rule()
-st.subheader("Known limitations", anchor=False)
+st.subheader("What we don't know", anchor=False)
 st.markdown(
     md_money("""
-- **Bond elections are missing.** The BRB election search (debtsearch.brb.texas.gov) was not reachable from the build, and
-  the open-data copy is a link last updated in 2017. The Ballot Beeswarm, pass rates and bond dollars per new seat are not shown.
-- Per-student figures for very small districts are volatile; one-off accounting entries can dominate a year (for example
-  one district reporting $130,791 per student in 2017-18). Out-of-bounds values are logged in `data/qa/spending_bounds_log.csv`,
-  never dropped.
-- Demographic shares (TAPR 2023-24) lag the latest finance year by one year. ACS income is a 5-year average.
-- SSA adjustment: services that members buy through a shared services arrangement are counted for neither the member
-  (function 93 is excluded) nor the fiscal agent (SSA funds removed).
-- Recapture amounts for 2025-26 (near-final) and 2026-27 (preliminary) are reported by TEA but not used in analysis until final.
-- All relationships shown are descriptive, not causal. Law-change markers on Equity Over Time mark timing only.
+- **Bond elections are missing.** Our build couldn't reach the Bond Review Board's election search
+  (debtsearch.brb.texas.gov), and the open-data copy is only a link, last updated in 2017. So the Ballot Beeswarm, pass
+  rates and bond dollars per new seat aren't shown.
+- Per-student figures for very small districts swing a lot. One unusual accounting entry can dominate a year. For example,
+  one district reported $130,791 per student in 2017-18. We log values outside the normal range in
+  `data/qa/spending_bounds_log.csv` and never drop them.
+- Student shares (TAPR 2023-24) are one year older than the latest spending data. Census income is a 5-year average.
+- Shared services arrangements: services a district buys through one of these arrangements don't count as spending for
+  that district (function 93 is left out) or for the fiscal agent (its shared services funds are removed).
+- TEA has posted recapture for 2025-26 (near-final) and 2026-27 (preliminary). We don't use them until they're final.
+- Everything here shows patterns, not causes. The law markers on Equity Over Time only mark timing.
 """)
 )
 

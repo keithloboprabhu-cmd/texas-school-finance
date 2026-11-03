@@ -26,49 +26,52 @@ def stops(year: int) -> list[dict]:
             view="Bivariate",
             metric="wealth",
             text=(
-                "Each district is coloured by thirds of property wealth and of spending per student. "
-                "If wealth drove spending, the map would run from light grey to dark purple."
+                "Each district's color shows how its property wealth and its spending per student compare "
+                "with other districts. If wealth drove spending, most districts would be light gray or dark purple."
             ),
-            number=f"{last.elasticity:+.3f}",
-            number_label=f"wealth elasticity of spending, {sy(int(last.year))}",
+            number=f"{last.elasticity * 10:+.2f}%",
+            number_label=f"extra spending per student for every 10% more property wealth, {sy(int(last.year))}",
         ),
         dict(
             title="Mineral wealth",
             view="Single metric",
             metric="mineral",
             text=(
-                "In many West Texas and Gulf Coast districts most taxable value is oil, gas and minerals. "
-                "That wealth belongs to the tax base, not to residents."
+                "In some districts, most of the taxable property is oil, gas and minerals. That makes the district "
+                "look rich on paper even when the people who live there are not."
             ),
             number=pct(top_mineral.mineral_share.median(), 0),
-            number_label="median mineral share among the 25 most mineral-heavy districts",
+            number_label="typical share of property that is minerals, in the 25 most mineral-heavy districts",
             focus=(float(top_mineral.lat.median()), float(top_mineral.lon.median()), 6.2),
         ),
         dict(
             title="Recapture",
             view="Single metric",
             metric="recapture",
-            text="Districts above the state's wealth threshold send part of their local revenue to the state.",
+            text=(
+                "When a district's local taxes raise more than the state formula allows, it sends the extra to "
+                "the state. This is called recapture."
+            ),
             number=big_money(rec.total_paid),
-            number_label=f"paid by {int(rec.payers)} districts in {sy(year)}",
+            number_label=f"sent to the state by {int(rec.payers)} districts in {sy(year)}",
         ),
         dict(
             title="Where Texas is growing",
             view="Single metric",
             metric="growth",
-            text="Enrollment grows in suburban rings around Houston, Dallas-Fort Worth, Austin and San Antonio.",
+            text="Clay districts gained students over the last five years. Teal districts lost students.",
             number=f"{int(camp.new_open):,}",
-            number_label="ISD campuses opened since 2016-17 and still open",
+            number_label="school district campuses opened since 2016-17 that are still open",
         ),
         dict(
             title="Borrowing to build",
             view="Single metric",
             metric="debt",
-            text="Tax-supported school debt is concentrated in growing districts.",
+            text="School districts borrow to build schools, and voters approve the debt. Darker districts owe more per student.",
             number=big_money(d1.tax_supported_principal),
             number_label=(
-                f"ISD tax-supported principal, FY{int(d1.fiscal_year)} "
-                f"(FY{int(d0.fiscal_year)}: {big_money(d0.tax_supported_principal)}, nominal)"
+                f"voter-approved debt owed by Texas school districts in fiscal year {int(d1.fiscal_year)}, up from "
+                f"{big_money(d0.tax_supported_principal)} in {int(d0.fiscal_year)} (not adjusted for inflation)"
             ),
         ),
         dict(
@@ -76,20 +79,20 @@ def stops(year: int) -> list[dict]:
             view="Single metric",
             metric="residual",
             text=(
-                "After accounting for wealth, size, need, locale and density, the districts spending most "
-                "above prediction are all very small and rural."
+                "We predicted each district's spending from its wealth, size, students and setting. The districts "
+                "that spend the most above that prediction are all small and rural."
             ),
             number=f"{int(over.n_small)} of {int(over.n)}",
-            number_label="top over-spenders with fewer than 500 students",
+            number_label="biggest over-spenders that have fewer than 500 students",
         ),
         dict(
             title="How equity changed",
             view="Bivariate",
             metric="wealth",
-            text="Spending is less tied to property wealth than it was in the early 2010s.",
+            text="Spending depends less on property wealth than it did in the early 2010s.",
             number=f"{(first.quintile_gap_ratio - 1):+.1%} → {(last.quintile_gap_ratio - 1):+.1%}",
             number_label=(
-                f"spending gap, wealthiest vs. poorest fifth of students, {sy(int(first.year))} → "
+                f"spending gap between students in the wealthiest and poorest fifth of districts, {sy(int(first.year))} → "
                 f"{sy(int(last.year))}"
             ),
         ),

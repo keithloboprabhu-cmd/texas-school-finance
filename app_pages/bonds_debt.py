@@ -41,11 +41,11 @@ page_header(
 )
 
 notice(
-    "Bond elections are not shown yet.",
-    "Election results (amount requested, purpose, carried or defeated) come from the Texas Bond Review Board's "
-    "search site, debtsearch.brb.texas.gov, which this build could not reach. The Texas Open Data Portal copy is "
-    "only a link to that site and was last updated in 2017. The Ballot Beeswarm and pass-rate analysis will be "
-    "added once the data is available; nothing here is estimated in their place.",
+    "Bond elections aren't shown yet.",
+    "Election results (how much a district asked for, what for, and whether voters approved it) come from the "
+    "Texas Bond Review Board's search site, debtsearch.brb.texas.gov. Our build couldn't reach that site. The copy "
+    "on the Texas Open Data Portal only links to it and was last updated in 2017. We'll add the Ballot Beeswarm "
+    "and pass rates once we have the data. Nothing on this page is estimated to fill the gap.",
 )
 
 dd = data.query("debt_districts")
@@ -55,34 +55,35 @@ first, last = ds.iloc[0], ds.iloc[-1]
 c1, c2, c3, c4 = st.columns(4)
 with c1:
     metric(
-        f"Tax-supported principal, FY{fy}",
+        f"Voter-approved debt owed, fiscal year {fy}",
         big_money(last.tax_supported_principal),
-        f"FY{int(first.fiscal_year)}: {big_money(first.tax_supported_principal)} (nominal)",
+        f"{int(first.fiscal_year)}: {big_money(first.tax_supported_principal)} (not adjusted for inflation)",
     )
 with c2:
     metric("Districts with debt", f"{int(last.n_districts):,}")
 with c3:
     metric(
-        "Median debt per ADA",
+        "Typical debt per student (ADA)",
         money(dd.debt_per_ada.median()),
-        "tax-supported principal / ADA (BRB measure)",
+        "debt divided by average daily attendance, as the Bond Review Board reports it",
     )
 with c4:
     metric(
-        "CAB share of principal",
+        "Debt in deferred-interest bonds (CABs)",
         pct(last.cab_principal / (last.cab_principal + last.cib_principal), 2),
-        f"FY{int(first.fiscal_year)}: {pct(first.cab_principal / (first.cab_principal + first.cib_principal), 2)}",
+        f"{int(first.fiscal_year)}: {pct(first.cab_principal / (first.cab_principal + first.cib_principal), 2)}",
     )
 st.caption(
-    f"Texas Bond Review Board, state fiscal year (Sept-Aug) {fy}. Tax-supported = general obligation (GO) "
-    "pledge. Excludes obligations under one year and special obligations not requiring Attorney General approval."
+    f"Source: Texas Bond Review Board, fiscal year {fy} (September to August). Counts debt repaid from property "
+    "taxes (general obligation bonds). Leaves out debt due within a year and special obligations that don't need "
+    "the Attorney General's approval."
 )
 
 # ---------------------------------------------------------------- skyline
 rule()
 left, right = st.columns([2.3, 1], gap="large")
 with left:
-    st.subheader("Debt skyline", anchor=False)
+    st.subheader("Debt Skyline", anchor=False)
     sk = dd.dropna(subset=["lat", "debt_per_student"]).copy()
     cap = sk.debt_per_student.quantile(0.99)
     sk["elev"] = sk.debt_per_student.clip(upper=cap) / cap * 220_000
@@ -130,8 +131,8 @@ with left:
         )
     )
     reading(
-        f"Each column is a district. Height = tax-supported debt per enrolled student (capped at the 99th "
-        f"percentile, {money(cap)}); colour = I&S (debt) tax rate."
+        f"Each column is a district. Taller columns owe more voter-approved debt per student. The tallest 1% are "
+        f"cut off at {money(cap)} so the rest stay visible. Color shows the debt tax rate (I&S)."
     )
     view_table(
         dd[
@@ -150,34 +151,40 @@ with left:
     view_sql("debt_districts")
 with right:
     legend_quantile("Debt tax rate (I&S), per $100 of value", br, lambda v: f"{v * 100:.1f}¢")
-    st.markdown("**Largest debt loads**")
+    st.markdown("**Owe the most**")
     st.dataframe(
         dd.head(10)[["district_name", "tax_supported_principal", "debt_per_student"]],
         hide_index=True,
         width="stretch",
         column_config={
             "tax_supported_principal": st.column_config.NumberColumn(
-                "principal", format="localized"
+                "debt owed ($)", format="localized"
             ),
-            "debt_per_student": st.column_config.NumberColumn("per student", format="localized"),
+            "debt_per_student": st.column_config.NumberColumn(
+                "per student ($)", format="localized"
+            ),
         },
     )
 
 # ---------------------------------------------------------------- maturity
 rule()
-st.subheader("When the debt finishes", anchor=False)
+st.subheader("When the debt is paid off", anchor=False)
 mw = data.query("maturity_wall")
 fig = go.Figure()
+PURPOSE_LABELS = {"New money": "New borrowing", "Refunding": "Refinancing"}
 for grp, col in [("New money", INK_2), ("Refunding", "#B9B2A3")]:
     g = mw[mw.purpose_group == grp]
     fig.add_bar(
-        x=g.final_maturity_year, y=g.debt_service_outstanding / 1e9, name=grp, marker_color=col
+        x=g.final_maturity_year,
+        y=g.debt_service_outstanding / 1e9,
+        name=PURPOSE_LABELS[grp],
+        marker_color=col,
     )
 peak = mw.groupby("final_maturity_year").debt_service_outstanding.sum()
 fig.add_annotation(
     x=peak.idxmax(),
     y=peak.max() / 1e9,
-    text=f"peak: {peak.idxmax()}",
+    text=f"largest year: {peak.idxmax()}",
     showarrow=True,
     arrowhead=0,
     ax=0,
@@ -187,15 +194,15 @@ fig.add_annotation(
 fig.add_vline(x=fy, line=dict(color=CLAY, width=1, dash="dot"))
 fig.update_layout(
     barmode="stack",
-    yaxis_title="$ billions outstanding (principal + interest)",
-    xaxis_title="final maturity year",
+    yaxis_title="$ billions still owed (principal and interest)",
+    xaxis_title="year the debt is fully paid off",
     legend=dict(orientation="h", y=1.08),
 )
 charts.show(fig, height=380, key="wall")
 reading(
-    f"Total remaining debt service (FY{fy}) grouped by each bond's final maturity year. This is not an annual "
-    "payment schedule: BRB does not publish per-issuance payment schedules in bulk, so the chart shows when "
-    "obligations finish, not when each payment falls."
+    f"All remaining debt payments, as of fiscal year {fy}, grouped by the year each bond is fully paid off. "
+    "The chart doesn't show how much is due in each year. The Bond Review Board doesn't publish each bond's "
+    "payment schedule in bulk."
 )
 view_table(mw, "wall")
 view_sql("maturity_wall")
@@ -206,8 +213,8 @@ a, b = st.columns(2, gap="large")
 with a:
     st.subheader("Capital appreciation bonds", anchor=False)
     html_out(
-        f'<p class="ll-reading">{term("cab", "CABs")} defer all interest to maturity, so the final bill is '
-        f"large relative to principal. Statewide share of outstanding principal by fiscal year:</p>"
+        f'<p class="ll-reading">{term("cab", "CABs")} put off all interest until the end, so the final bill is '
+        f"large compared with the amount borrowed. Their share of all school district debt, by year:</p>"
     )
     fig = go.Figure(
         go.Scatter(
@@ -217,7 +224,7 @@ with a:
             line=dict(color=CLAY),
         )
     )
-    fig.update_yaxes(tickformat=".1%", title="CAB share of principal")
+    fig.update_yaxes(tickformat=".1%", title="share of debt in CABs")
     charts.show(fig, height=260, key="cab")
     cab = dd[dd.cab_principal > 0].sort_values("cab_share_principal", ascending=False).head(20)
     st.dataframe(
@@ -225,35 +232,39 @@ with a:
         hide_index=True,
         width="stretch",
         column_config={
-            "cab_principal": st.column_config.NumberColumn("CAB principal", format="localized"),
-            "cab_share_principal": st.column_config.NumberColumn("CAB share", format="percent"),
+            "cab_principal": st.column_config.NumberColumn("owed in CABs ($)", format="localized"),
+            "cab_share_principal": st.column_config.NumberColumn(
+                "share of district's debt", format="percent"
+            ),
         },
     )
     view_sql("debt_state_year", "debt_districts")
 with b:
-    st.subheader("Tax anatomy", anchor=False)
+    st.subheader("Tax Anatomy", anchor=False)
     ta = data.query("tax_anatomy")
     share = ta.is_rate_wavg / (ta.mo_rate_wavg + ta.is_rate_wavg)
     fig = go.Figure()
-    fig.add_bar(x=ta.year, y=ta.mo_rate_wavg, name="M&O", marker_color=INK_2)
-    fig.add_bar(x=ta.year, y=ta.is_rate_wavg, name="I&S (debt)", marker_color=CLAY)
+    fig.add_bar(x=ta.year, y=ta.mo_rate_wavg, name="Operations (M&O)", marker_color=INK_2)
+    fig.add_bar(x=ta.year, y=ta.is_rate_wavg, name="Debt (I&S)", marker_color=CLAY)
     fig.update_layout(
         barmode="stack",
-        yaxis_title="average rate per $100 (enrollment-weighted)",
+        yaxis_title="average rate per $100 of property (weighted by enrollment)",
         legend=dict(orientation="h", y=1.1),
     )
     charts.show(fig, height=300, key="anatomy")
     st.markdown(
         md_money(
-            f"The I&S share of the average school tax rate went from **{share.iloc[0]:.0%}** in {sy(int(ta.year.iloc[0]))} "
-            f"to **{share.iloc[-1]:.0%}** in {sy(int(ta.year.iloc[-1]))}, as M&O rates were compressed."
+            f"The debt part of the average school tax rate grew from **{share.iloc[0]:.0%}** in {sy(int(ta.year.iloc[0]))} "
+            f"to **{share.iloc[-1]:.0%}** in {sy(int(ta.year.iloc[-1]))}, as the operations rate fell."
         )
     )
-    reading("M&O funds day-to-day operations; I&S repays bonds. Rates are TEA's adopted rates.")
+    reading(
+        "The operations rate (M&O) pays day-to-day costs. The debt rate (I&S) repays bonds. These are the rates districts adopted, as reported by TEA."
+    )
     view_table(ta, "anatomy")
     view_sql("tax_anatomy")
 
-with st.expander("Tax anatomy of the 10 largest districts"):
+with st.expander("Tax rates in the 10 largest districts"):
     tl = data.query("tax_anatomy_largest")
     names = tl.district_name.unique()
     cols = st.columns(5)
@@ -295,13 +306,13 @@ fig.add_scatter(
     x=xs, y=np.exp(a0 + slope * xs), mode="lines", line=dict(color=CLAY), hoverinfo="skip"
 )
 fig.update_xaxes(tickformat=".0%", title="5-year enrollment change")
-fig.update_yaxes(type="log", title=f"tax-supported debt per student, FY{fy} (log)")
+fig.update_yaxes(type="log", title=f"voter-approved debt per student, fiscal year {fy} (log scale)")
 fig.update_layout(showlegend=False)
 charts.show(fig, height=420, key="dg")
 st.markdown(
-    f"Each additional 10 percentage points of 5-year enrollment growth goes with about "
-    f"**{(np.exp(slope * 0.1) - 1):+.0%}** more debt per student (95% CI {(np.exp(lo * 0.1) - 1):+.0%} to "
-    f"{(np.exp(hi * 0.1) - 1):+.0%}; n = {n:,}, enrollment-weighted). Descriptive, not causal."
+    f"For every 10 more percentage points of enrollment growth over five years, districts owe about "
+    f"**{(np.exp(slope * 0.1) - 1):+.0%}** more debt per student (likely range {(np.exp(lo * 0.1) - 1):+.0%} to "
+    f"{(np.exp(hi * 0.1) - 1):+.0%}; {n:,} districts, weighted by enrollment). This shows a pattern, not a cause."
 )
 view_table(dg, "dg")
 view_sql("debt_growth")

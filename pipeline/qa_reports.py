@@ -53,12 +53,12 @@ def run(con) -> None:
     lines = [
         "# Reconciliation with TEA published totals",
         "",
-        "Statewide operating expenditures (TEA definition: all funds, objects 6100-6400, operating "
-        "functions, excluding capital projects funds) from this pipeline versus TEA's Financial Actual "
-        "Report workbooks ('Actual PWR', column *AF Total Operating Expenditures by Function*), over "
-        "the non-charter districts present in both. Tolerance: +/-2%.",
+        "We compare our statewide day-to-day spending total, using TEA's definition (all funds, objects "
+        "6100-6400, operating functions, no capital projects funds), with TEA's own Financial Actual Report "
+        "workbooks ('Actual PWR', column *AF Total Operating Expenditures by Function*). The comparison covers "
+        "the non-charter districts in both. We aim to match within 2%.",
         "",
-        "| School year | Districts | Pipeline ($) | TEA published ($) | Difference | Within 2% |",
+        "| School year | Districts | Our total ($) | TEA's total ($) | Difference | Within 2% |",
         "|---|---:|---:|---:|---:|:---:|",
     ]
     pwr_all = {}
@@ -89,12 +89,12 @@ def run(con) -> None:
     rows = [
         "# District spot checks",
         "",
-        f"School year {latest - 1}-{str(latest)[2:]}. TEA figures come from TEA's Financial Actual Report "
-        "workbook (operating expenditures by function, all funds; enrollment from the same workbook). "
-        "'Headline' is this project's operating spending, which additionally removes shared services "
-        "arrangement fiscal-agent funds.",
+        f"School year {latest - 1}-{str(latest)[2:]}. TEA's figures come from its Financial Actual Report "
+        "workbook (day-to-day spending from all funds, divided by enrollment from the same workbook). "
+        "'Our main measure' also removes money a district spends as fiscal agent for a shared services "
+        "arrangement.",
         "",
-        "| District | CDN | Enrollment (TEA) | TEA operating per student | Pipeline, TEA definition | Diff | Pipeline headline | Headline vs TEA |",
+        "| District | CDN | Students (TEA) | TEA, per student | Ours, TEA's definition | Difference | Our main measure | vs. TEA |",
         "|---|---|---:|---:|---:|---:|---:|---:|",
     ]
     for _, r in (

@@ -1,4 +1,4 @@
--- Function mix of operating spending for the 10 largest districts, latest year (share of operating)
+-- What the 10 largest districts spend their budgets on, latest year (share of day-to-day spending)
 SELECT district_name, enrollment,
        round(instruction_per_student_real / op_per_student_real, 3) AS instruction,
        round(school_leadership_per_student_real / op_per_student_real, 3) AS leadership,

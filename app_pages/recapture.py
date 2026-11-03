@@ -33,15 +33,15 @@ years = data.query("meta_years").year.tolist()
 page_header(
     "02 · Robin Hood",
     "Recapture",
-    "Which districts send local property-tax revenue to the state, and how much.",
+    "Which districts send local property-tax money to the state, and how much.",
 )
 html_out(
-    f'<p class="ll-subtitle" style="margin-top:0">How it works: Texas sets how much revenue each district is '
-    f"entitled to from its local taxes and state aid. A property-wealthy district whose local M&O taxes would raise "
-    f"more than that entitlement sends the excess to the state, which uses it in the Foundation School Program "
-    f"({term('recapture', 'recapture')}, Texas Education Code chapter 49). It is a payment into a state pool, not a "
-    f'transfer to particular districts. <a href="https://tea.texas.gov/about-tea/state-funding/excess-local-revenue">'
-    f"TEA's explainer →</a></p>"
+    f'<p class="ll-subtitle" style="margin-top:0">How it works: the state sets how much money each district '
+    f"should get from its local taxes and state aid combined. When a property-wealthy district's local taxes "
+    f"would raise more than that, it sends the extra to the state. This is {term('recapture', 'recapture')} "
+    f"(Texas Education Code chapter 49). The money goes into the state's Foundation School Program, which funds "
+    f'districts across Texas. <a href="https://tea.texas.gov/about-tea/state-funding/excess-local-revenue">'
+    f"Read TEA's explanation →</a></p>"
 )
 year = st.selectbox("School year", years[::-1], format_func=sy)
 
@@ -52,7 +52,7 @@ m1, m2, m3, m4 = st.columns(4)
 from ui.components import metric  # noqa: E402
 
 with m1:
-    metric("Recapture paid", big_money(row.recapture_paid), sy(year))
+    metric("Sent to the state", big_money(row.recapture_paid), sy(year))
 with m2:
     metric("Districts paying", f"{int(row.payers):,}")
 with m3:
@@ -63,9 +63,9 @@ with m3:
     )
 with m4:
     metric(
-        "Median share of spending",
+        "Typical share of the budget sent",
         pct(rd.share_of_spending.median(), 1),
-        "recapture / (operating + recapture)",
+        "recapture as a share of day-to-day spending plus recapture",
     )
 
 rule()
@@ -141,8 +141,8 @@ with left:
         )
     )
     reading(
-        "Payments to the state's Foundation School Program. Each arc runs from a paying district to the State "
-        "Capitol; width grows with dollars paid. Recapture goes into a state pool, not to particular districts."
+        "Each line runs from a paying district to the State Capitol. Thicker lines carry more money. The money "
+        "goes into the state's Foundation School Program, which funds districts across Texas, so every line ends in Austin."
     )
     view_table(
         rd[
@@ -160,7 +160,7 @@ with left:
     )
     view_sql("recapture_districts")
 with right:
-    st.subheader("By year", anchor=False)
+    st.subheader("Recapture by year", anchor=False)
     fig = go.Figure(
         go.Bar(
             x=ry.year,
@@ -175,23 +175,27 @@ with right:
     if len(rec):
         st.caption(
             md_money(
-                "TEA also reports "
+                "TEA has also posted "
                 + "; ".join(
                     f"{big_money(r.recapture_paid)} for {sy(int(r.year))} ({r.amount_status})"
                     for r in rec.itertuples()
                 )
-                + ". Not shown above until final."
+                + ". These aren't final yet, so the chart leaves them out."
             )
         )
     view_table(ry, "ry")
     view_sql("recapture_by_year", "recapture_recent")
     grp = data.query("recapture_by_group", year=year)
-    st.markdown("**By locale**")
+    st.markdown("**By setting**")
     st.dataframe(
         grp[grp.kind == "locale"][["grp", "payers", "paid"]],
         hide_index=True,
         width="stretch",
-        column_config={"paid": st.column_config.NumberColumn(format="localized"), "grp": "locale"},
+        column_config={
+            "paid": st.column_config.NumberColumn("sent ($)", format="localized"),
+            "grp": "setting",
+            "payers": "districts paying",
+        },
     )
     with st.expander("By ESC region"):
         st.dataframe(
@@ -199,30 +203,31 @@ with right:
             hide_index=True,
             width="stretch",
             column_config={
-                "paid": st.column_config.NumberColumn(format="localized"),
+                "paid": st.column_config.NumberColumn("sent ($)", format="localized"),
                 "grp": "region",
+                "payers": "districts paying",
             },
         )
     view_sql("recapture_by_group")
 
 # ---------------------------------------------------------------- money cycle
 rule()
-st.subheader(f"The money cycle, {sy(year)}", anchor=False)
+st.subheader(f"Where the money comes from and where it goes, {sy(year)}", anchor=False)
 mc = data.query("money_cycle", year=year).iloc[0]
 src = [
-    ("Local M&O tax", mc.local_mo_tax),
-    ("Local I&S (debt) tax", mc.local_is_tax),
+    ("Local operating tax (M&O)", mc.local_mo_tax),
+    ("Local debt tax (I&S)", mc.local_is_tax),
     ("Other local", mc.other_local),
     ("State aid", mc.state_revenue),
     ("Federal", mc.federal_revenue),
 ]
 uses = [
-    ("Recapture to state", mc.recapture),
-    ("Debt service", mc.debt_service),
-    ("Capital & construction", mc.capital),
+    ("Sent to the state (recapture)", mc.recapture),
+    ("Debt payments", mc.debt_service),
+    ("Buildings and construction", mc.capital),
     ("Instruction", mc.op_instruction + mc.op_instructional_support),
     (
-        "Leadership & admin",
+        "School leadership and administration",
         mc.op_school_leadership + mc.op_general_administration + mc.op_data_processing,
     ),
     ("Student support", mc.op_student_support),
@@ -230,13 +235,13 @@ uses = [
         "Transport, food, extracurricular",
         mc.op_transportation + mc.op_food_service + mc.op_extracurricular,
     ),
-    ("Plant & security", mc.op_plant_maintenance_security),
-    ("Other (community, intergovernmental)", mc.op_community_services + mc.intergovernmental),
+    ("Building upkeep and security", mc.op_plant_maintenance_security),
+    ("Other", mc.op_community_services + mc.intergovernmental),
 ]
 tot_src, tot_use = sum(v for _, v in src), sum(v for _, v in uses)
 labels = (
     [f"{n}<br>{big_money(v)} · {v / tot_src:.0%}" for n, v in src]
-    + [f"Texas ISDs<br>{big_money(tot_src)}"]
+    + [f"Texas school districts<br>{big_money(tot_src)}"]
     + [f"{n}<br>{big_money(v)} · {v / tot_use:.0%}" for n, v in uses]
 )
 hub = len(src)
@@ -262,9 +267,9 @@ fig = go.Figure(
 fig.update_layout(font=dict(size=13))
 charts.show(fig, height=520, key="sankey")
 reading(
-    f"Revenue recorded by districts (left) and what they spent it on (right), all funds, nominal dollars. "
-    f"Sources total {big_money(tot_src)} and uses {big_money(tot_use)}; the gap is changes in fund balance and "
-    "financing (bond proceeds pay for much of the capital)."
+    f"Money districts took in (left) and what they spent it on (right), across all funds, not adjusted for "
+    f"inflation. They took in {big_money(tot_src)} and spent {big_money(tot_use)}. Savings and borrowing, such as "
+    "bond sales, cover the difference."
 )
 view_table(
     data.query("money_cycle", year=year)
@@ -278,12 +283,12 @@ view_sql("money_cycle")
 rule()
 t1, t2 = st.columns(2, gap="large")
 cfg = {
-    "recapture_paid": st.column_config.NumberColumn("paid", format="localized"),
+    "recapture_paid": st.column_config.NumberColumn("sent ($)", format="localized"),
     "recapture_per_student_real": st.column_config.NumberColumn("per student", format="localized"),
     "share_of_spending": st.column_config.NumberColumn("share of spending", format="percent"),
 }
 with t1:
-    st.subheader("Top 20 by dollars", anchor=False)
+    st.subheader("Top 20 by total sent", anchor=False)
     st.dataframe(
         rd.nlargest(20, "recapture_paid")[
             [
@@ -299,7 +304,7 @@ with t1:
         column_config=cfg,
     )
 with t2:
-    st.subheader("Top 20 by per-student burden", anchor=False)
+    st.subheader("Top 20 per student", anchor=False)
     st.dataframe(
         rd.nlargest(20, "recapture_per_student_real")[
             [
@@ -316,9 +321,9 @@ with t2:
     )
 view_sql("recapture_districts")
 
-with st.expander("TEA excess local revenue lists (2025-26 and 2026-27 estimates)"):
+with st.expander("TEA's lists of districts expected to owe recapture (2025-26 and 2026-27)"):
     st.caption(
-        "TEA's July notification lists. Estimates; districts on the list do not necessarily owe recapture."
+        "TEA publishes these lists each July. They are estimates, and a district on the list may end up owing nothing."
     )
     st.dataframe(data.query("elr_list"), hide_index=True, width="stretch")
     view_sql("elr_list")

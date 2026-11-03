@@ -42,7 +42,7 @@ layers:
     column: recapture_per_student
     fmt: money
     palette: sequential
-    read: Local property-tax money a wealthy district must send to the state ("recapture"), per student. Grey =
+    read: Local property-tax money a wealthy district must send to the state ("recapture"), per student. Gray =
       sends none.
   debt:
     theme: Debt

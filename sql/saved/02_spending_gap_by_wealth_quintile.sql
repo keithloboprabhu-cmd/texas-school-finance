@@ -1,4 +1,4 @@
--- Real operating spending per student by property-wealth quintile (district quintiles, enrollment-weighted means)
+-- Spending per student by property-wealth fifth, latest year (inflation-adjusted, weighted by enrollment)
 WITH y AS (
   SELECT *, ntile(5) OVER (ORDER BY wealth_per_student_real) AS wealth_quintile
   FROM mart_district_year WHERE year = (SELECT max(year) FROM mart_district_year) AND is_current

@@ -1,63 +1,67 @@
 # One source for every hover definition and the Methodology glossary.
 cdn:
   label: CDN (County-District Number)
-  definition: TEA's 6-digit district identifier. The first three digits are the county number.
+  definition: TEA's 6-digit ID for a district. The first three digits are the county number.
 ada:
   label: ADA (average daily attendance)
-  definition: The average number of students in attendance each day; the base for most state funding.
+  definition: How many students attend on an average day. Most state funding is based on it.
 wada:
   label: WADA (weighted average daily attendance)
-  definition: >-
-    ADA adjusted with weights for student needs and district characteristics, used by TEA as the
-    denominator for its measure of district property wealth.
+  definition: Attendance adjusted for student needs and district traits. TEA uses it to measure district property
+    wealth.
 recapture:
-  label: Recapture (excess local revenue)
-  definition: >-
-    Local property-tax revenue above the level the school finance formulas entitle a district to keep,
-    which property-wealthy districts send to the state. Often called "Robin Hood."
+  label: Recapture
+  definition: Local property-tax money above what the state school funding formulas let a district keep. Property-wealthy
+    districts send it to the state. Often called "Robin Hood."
 mo_rate:
   label: M&O tax rate
-  definition: Maintenance and operations property tax rate; funds day-to-day spending.
+  definition: The maintenance and operations tax rate. It pays for day-to-day costs.
 is_rate:
   label: I&S tax rate
-  definition: Interest and sinking property tax rate; repays voter-approved bond debt (the "debt tax").
+  definition: The interest and sinking tax rate. It repays bonds that voters approved, so it's often called the
+    debt tax.
 elasticity:
   label: Wealth elasticity of spending
-  definition: >-
-    The percent change in per-student spending associated with a 1% change in property wealth per
-    student. Zero means spending does not depend on wealth.
+  definition: How much spending per student changes when property wealth per student goes up 1%. Zero means wealth
+    makes no difference.
 mcloone:
   label: McLoone index
-  definition: >-
-    Total spending on students below the median, divided by what that spending would be if each of
-    those students received the median amount. 1.0 means no inequality in the bottom half.
+  definition: Compares what students in lower-spending districts get with what they'd get at the median. 1.0 means
+    the bottom half is fully caught up to the median.
 cv:
   label: Coefficient of variation
-  definition: The standard deviation of per-student spending divided by its mean.
+  definition: 'A measure of how spread out spending is: the standard deviation divided by the average. Lower means
+    more equal.'
 econ_disadv:
   label: Economically disadvantaged
-  definition: TEA's flag for students eligible for free or reduced-price meals or other public assistance.
+  definition: TEA's label for students who qualify for free or reduced-price meals or other public assistance.
 cab:
   label: CAB (capital appreciation bond)
-  definition: A bond that pays no interest until maturity, so interest compounds; usually costly.
+  definition: A bond that pays no interest until the end. Interest builds up in the meantime, so CABs usually cost
+    more.
 cib:
   label: CIB (current interest bond)
-  definition: A bond that pays interest periodically over its life.
+  definition: A regular bond that pays interest as it goes.
 refunding:
   label: Refunding
-  definition: Issuing new bonds to refinance existing debt, as opposed to new-money bonds for new projects.
+  definition: Selling new bonds to pay off old ones, usually at a lower interest rate. New-money bonds pay for new
+    projects instead.
 huber:
   label: Huber robust regression
-  definition: A regression that down-weights observations with large residuals, used here to check whether outlier rankings depend on a few extreme districts.
+  definition: A method that gives less weight to extreme districts. We use it to check whether a few unusual districts
+    drive the rankings.
 property_wealth:
   label: Property wealth per student
-  definition: The Comptroller-certified taxable property value used for school funding, divided by fall enrollment.
+  definition: The taxable property value the Comptroller certifies for school funding, divided by fall enrollment.
 recapture_designated:
   label: Chapter 41/49 designation
-  definition: TEA's flag that a district's local revenue exceeded its entitlement in that year, as shown in TEA's Recapture Paid by District file.
+  definition: TEA's flag that a district's local revenue was more than it was entitled to that year, from TEA's
+    Recapture Paid by District file.
 real_dollars:
-  label: Real dollars
-  definition: Dollars adjusted for inflation with CPI-U (school-year average, July-June) and expressed in dollars of the latest school year.
+  label: Inflation-adjusted dollars
+  definition: Dollars adjusted for inflation with the Consumer Price Index (averaged July to June) and shown in
+    dollars of the latest school year.
 proxy:
   label: Proxy
-  definition: An indirect measure. Texas publishes no statewide dataset of school construction cost per square foot, so capital spending per new student or per new campus is shown instead and labelled as a proxy.
+  definition: A rough stand-in for something that isn't measured directly. Texas doesn't publish school construction
+    cost per square foot, so we show building spending per new student or per new campus instead.

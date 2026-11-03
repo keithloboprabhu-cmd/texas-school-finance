@@ -49,24 +49,26 @@ def harden_connection(con: duckdb.DuckDBPyConnection) -> None:
 def validate(sql: str) -> str:
     """Return the single SELECT statement (without trailing semicolon) or raise QueryRejected."""
     if not sql or not sql.strip():
-        raise QueryRejected("Enter a query.")
+        raise QueryRejected("Type a query first.")
     if len(sql) > MAX_QUERY_CHARS:
-        raise QueryRejected(f"Query is longer than {MAX_QUERY_CHARS:,} characters.")
+        raise QueryRejected(
+            f"That query is too long. Keep it under {MAX_QUERY_CHARS:,} characters."
+        )
 
     body = _LEADING_COMMENTS.sub("", sql)
     first_word = (re.match(r"[A-Za-z]+", body) or [""])[0].upper()
     if first_word not in {"SELECT", "WITH"}:
-        raise QueryRejected("Only SELECT queries (optionally starting with WITH) are allowed.")
+        raise QueryRejected("The SQL Lab only reads data. Start your query with SELECT or WITH.")
 
     try:
         statements = duckdb.extract_statements(sql)
     except duckdb.Error as exc:
-        raise QueryRejected(f"Could not parse query: {exc}") from exc
+        raise QueryRejected(f"DuckDB couldn't read that query: {exc}") from exc
     if len(statements) != 1:
         raise QueryRejected("Run one statement at a time.")
     stmt = statements[0]
     if stmt.type != duckdb.StatementType.SELECT:
-        raise QueryRejected("Only SELECT queries are allowed.")
+        raise QueryRejected("The SQL Lab only reads data, so it runs SELECT queries only.")
     return stmt.query.strip().rstrip(";")
 
 
@@ -87,10 +89,14 @@ def run_query(
     try:
         frame = cur.execute(wrapped).df()
     except duckdb.InterruptException as exc:
-        raise QueryRejected(f"Query stopped after {timeout_s:g} seconds.") from exc
+        raise QueryRejected(
+            f"Query stopped after {timeout_s:g} seconds. Try a smaller query or add a LIMIT."
+        ) from exc
     except duckdb.Error as exc:
         if time.perf_counter() - start >= timeout_s:
-            raise QueryRejected(f"Query stopped after {timeout_s:g} seconds.") from exc
+            raise QueryRejected(
+                f"Query stopped after {timeout_s:g} seconds. Try a smaller query or add a LIMIT."
+            ) from exc
         raise QueryRejected(str(exc).split("\n")[0]) from exc
     finally:
         timer.cancel()

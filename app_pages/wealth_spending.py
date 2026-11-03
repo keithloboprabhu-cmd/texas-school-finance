@@ -45,16 +45,22 @@ with c2:
     hide_small = st.toggle(
         "Hide districts under 500 students",
         value=False,
-        help="Small districts have scale diseconomies and noisy per-student figures.",
+        help="Very small districts cost more per student to run, and their figures swing a lot from year to year.",
     )
     color_by = st.segmented_control(
-        "Colour", ["Econ. disadvantaged %", "Locale"], default="Econ. disadvantaged %"
+        "Color dots by",
+        ["Econ. disadvantaged %", "Locale"],
+        default="Econ. disadvantaged %",
+        format_func={
+            "Econ. disadvantaged %": "Low-income students",
+            "Locale": "City, suburb, town or rural",
+        }.get,
     )
 with c3:
     st.caption(
-        "Denominator: fall enrollment. ADA and WADA are not available in bulk for every district "
-        "(TEA's Summary of Finances has no statewide download). Cost adjustment: not applied "
-        "(see Methodology)."
+        "Per student means per student enrolled in the fall. TEA doesn't publish attendance-based counts "
+        "(ADA and WADA) for every district in one file, so we don't use them. Costs aren't adjusted for "
+        "regional price differences. See Methodology."
     )
 
 df = data.query("wealth_spending", year=year)
@@ -70,29 +76,29 @@ b, (lo, hi), r2, n = wls_hc1(
 left, right = st.columns([2.3, 1], gap="large")
 with right:
     html_out(
-        f'<div class="ll-kicker">{term("elasticity", "Wealth elasticity of spending")}, {sy(year)}</div>'
+        f'<div class="ll-kicker">{term("elasticity", "How much spending rises with wealth")}, {sy(year)}</div>'
     )
     html_out(
         f'<div class="ll-metric"><div class="value">{b:+.3f}</div>'
-        f'<div class="label">95% CI {lo:+.3f} to {hi:+.3f} · R² {r2:.2f} · n = {n:,}</div></div>'
+        f'<div class="label">Likely range {lo:+.3f} to {hi:+.3f} · fit (R²) {r2:.2f} · {n:,} districts</div></div>'
     )
     st.markdown(
         f"A district with **10% more property wealth per student spends about {b * 10:+.2f}% more** per student "
-        f"(95% CI {lo * 10:+.2f}% to {hi * 10:+.2f}%). Zero would mean spending does not depend on wealth."
+        f"(likely range {lo * 10:+.2f}% to {hi * 10:+.2f}%). Zero would mean wealth makes no difference to spending."
     )
     st.caption(
-        f"Enrollment-weighted least squares of log spending on log wealth, robust (HC1) errors. "
-        f"Excludes {len(flagged)} districts flagged for large virtual or non-resident enrollment"
-        + (", and districts under 500 students." if hide_small else ".")
+        f"Method: a line fitted to log spending and log wealth, weighted by enrollment, with robust (HC1) "
+        f"standard errors. Leaves out {len(flagged)} districts with many virtual or out-of-district students"
+        + (" and districts under 500 students." if hide_small else ".")
     )
     if year == latest:
         coefs = data.query("model_latest")
         cw = coefs[(coefs.model == "controlled") & (coefs.term == "log_wealth")].iloc[0]
         st.markdown(
-            f"**With controls** (size, need, locale, density): **{cw.coef:+.3f}** "
-            f"(95% CI {cw.ci_lo:+.3f} to {cw.ci_hi:+.3f})."
+            f"**Comparing similar districts** (same size, student needs, setting and density): **{cw.coef:+.3f}** "
+            f"(likely range {cw.ci_lo:+.3f} to {cw.ci_hi:+.3f})."
         )
-        with st.expander("Controlled model coefficients"):
+        with st.expander("Full model results"):
             st.dataframe(
                 coefs[coefs.model.isin(["controlled", "huber"])][
                     ["model", "term", "coef", "ci_lo", "ci_hi", "p_value", "n"]
@@ -101,8 +107,9 @@ with right:
                 width="stretch",
             )
             st.caption(
-                "Controlled: WLS, enrollment weights, HC1 errors. Huber: robust regression sensitivity check. "
-                "Demographic shares are TAPR 2023-24. Locale baseline: City."
+                '"controlled" is the main model: weighted by enrollment, with robust (HC1) errors. "huber" is a '
+                "check that gives less weight to extreme districts. Student shares come from TAPR 2023-24. Each "
+                "setting is compared with cities."
             )
 
 with left:
@@ -137,7 +144,7 @@ with left:
                 cmin=0,
                 cmax=1,
                 opacity=0.7,
-                colorbar=dict(title="econ. dis.", tickformat=".0%", thickness=10),
+                colorbar=dict(title="low-income", tickformat=".0%", thickness=10),
                 line=dict(width=0.5, color="#FBF8F2"),
             ),
             customdata=df[["district_name", "enrollment"]],
@@ -158,12 +165,14 @@ with left:
         name="weighted fit",
         hoverinfo="skip",
     )
-    fig.update_xaxes(type="log", title=f"Property wealth per student ({sy(latest)} $, log scale)")
-    fig.update_yaxes(type="log", title=f"Operating spending per student ({sy(latest)} $, log)")
+    fig.update_xaxes(
+        type="log", title=f"Taxable property per student ({sy(latest)} dollars, log scale)"
+    )
+    fig.update_yaxes(type="log", title=f"Spending per student ({sy(latest)} dollars, log scale)")
     fig.update_layout(legend=dict(orientation="h", y=1.05))
     charts.show(fig, height=560, key="ws_scatter")
     reading(
-        "Each dot is a district, sized by enrollment. A flat clay line means spending does not rise with wealth."
+        "Each dot is a district. Bigger dots have more students. If the clay line is flat, spending doesn't rise with wealth."
     )
     view_table(
         df[
@@ -183,11 +192,12 @@ with left:
 
 # ---------------------------------------------------------------- outliers
 rule()
-st.subheader(f"Outliers after controls, {sy(latest)}", anchor=False)
+st.subheader(f"Districts that spend far more or less than expected, {sy(latest)}", anchor=False)
 html_out(
-    f'<p class="ll-reading">Ranked by standardized residual from the controlled model: how far actual spending '
-    f'sits from what wealth, size, need, locale and density predict. "Why it might be" hints use only this '
-    f"project's data. ⚑ = ranking changes under {term('huber', 'Huber robust regression')}.</p>"
+    f'<p class="ll-reading">We predict each district\'s spending from its wealth, size, student needs, setting and '
+    f'density, then rank districts by how far they land from that prediction. The "why it might be" notes use '
+    f"only this site's data. ⚑ means the ranking changes under {term('huber', 'Huber robust regression')}, "
+    "which gives less weight to extreme districts.</p>"
 )
 ol = data.query("outliers_latest")
 
@@ -197,7 +207,7 @@ def outlier_table(sub: pd.DataFrame, key: str):
         district=sub.district_name.map(nice) + np.where(sub.method_sensitive, " ⚑", ""),
         actual=sub.op_per_student_real,
         predicted=sub.predicted_real,
-        recapture=np.where(sub.recapture_paid > 0, "pays", ""),
+        recapture=np.where(sub.recapture_paid > 0, "yes", ""),
         small=np.where(sub.small_district, "<500", ""),
         profile="/district?district=" + sub.cdn,
     )[
@@ -220,8 +230,10 @@ def outlier_table(sub: pd.DataFrame, key: str):
         width="stretch",
         key=key,
         column_config={
-            "actual": st.column_config.NumberColumn("actual $/student", format="localized"),
-            "predicted": st.column_config.NumberColumn("predicted", format="localized"),
+            "actual": st.column_config.NumberColumn("spends per student ($)", format="localized"),
+            "predicted": st.column_config.NumberColumn("predicted ($)", format="localized"),
+            "small": st.column_config.TextColumn("small"),
+            "recapture": st.column_config.TextColumn("pays recapture"),
             "std_residual": st.column_config.NumberColumn("vs. prediction (score)", format="%+.1f"),
             "hint": st.column_config.TextColumn("why it might be", width="large"),
             "profile": st.column_config.LinkColumn("profile", display_text="open →"),
@@ -242,9 +254,9 @@ view_sql("outliers_latest")
 rule()
 st.subheader("Two kinds of wealth", anchor=False)
 html_out(
-    f'<p class="ll-reading">{term("property_wealth", "Property wealth")} is the tax base; household income is '
-    "the community. Where they diverge, a district can be property-rich but income-poor (mineral or "
-    "industrial value) or the reverse.</p>"
+    f'<p class="ll-reading">{term("property_wealth", "Property wealth")} is what a district can tax. Household '
+    "income is what the people who live there earn. The two don't always match. A district with oil wells or a "
+    "refinery can be rich in property while its families earn little, and the reverse happens too.</p>"
 )
 tw = data.query("wealth_spending", year=latest)
 tw = tw[~tw.enrollment_caution].dropna(subset=["median_household_income"])
@@ -278,16 +290,18 @@ for q, g in tw.groupby("quadrant"):
     )
 fig.add_vline(x=mx, line=dict(color=INK_2, width=1, dash="dot"))
 fig.add_hline(y=my, line=dict(color=INK_2, width=1, dash="dot"))
-fig.update_xaxes(type="log", title="Property wealth per student (log)")
-fig.update_yaxes(title="Median household income (ACS 2020-2024)", tickprefix="$")
+fig.update_xaxes(type="log", title="Taxable property per student (log scale)")
+fig.update_yaxes(title="Typical household income (Census, 2020-2024)", tickprefix="$")
 fig.update_layout(legend=dict(orientation="h", y=1.08))
 charts.show(fig, height=460, key="two_wealths")
 pr = tw[tw.quadrant == "property-rich, income-poor"]
 st.markdown(
-    f"**{len(pr)} districts** are above the state median in property wealth but below it in household "
-    f"income; {int((pr.recapture_paid > 0).sum())} of them paid recapture in {sy(latest)}."
+    f"**{len(pr)} districts** are above the Texas median in property wealth but below it in household "
+    f"income. {int((pr.recapture_paid > 0).sum())} of them sent recapture to the state in {sy(latest)}."
 )
-reading("Quadrant lines are the district medians. Income is top-coded by the Census at $250,000.")
+reading(
+    "The dotted lines mark the middle district on each measure. The Census caps reported income at $250,000."
+)
 view_table(
     tw[
         [

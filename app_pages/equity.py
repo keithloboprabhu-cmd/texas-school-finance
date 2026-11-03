@@ -40,28 +40,34 @@ first, last = eq.iloc[0], eq.iloc[-1]
 w0 = eq.dropna(subset=["elasticity"]).iloc[0]
 st.markdown(
     md_money(
-        f"From {sy(y0)} to {sy(y1)}, the enrollment-weighted average real operating spending per student went from "
+        f"From {sy(y0)} to {sy(y1)}, average spending per student, adjusted for inflation, went from "
         f"**{money(first.mean_spend)}** to **{money(last.mean_spend)}** ({sy(y1)} dollars). The "
-        f"{term('mcloone', 'McLoone index')} moved from **{first.mcloone:.3f}** to **{last.mcloone:.3f}**, and the "
-        f"spending gap between the wealthiest and poorest fifths of students (by property wealth) went from "
-        f"**{w0.quintile_gap_ratio - 1:+.1%}** in {sy(int(w0.year))} to **{last.quintile_gap_ratio - 1:+.1%}**."
+        f"{term('mcloone', 'McLoone index')}, which shows how close the lower-spending half of students comes to "
+        f"the middle, moved from **{first.mcloone:.3f}** to **{last.mcloone:.3f}**. The spending gap between "
+        f"students in the wealthiest and poorest fifth of districts went from **{w0.quintile_gap_ratio - 1:+.1%}** "
+        f"in {sy(int(w0.year))} to **{last.quintile_gap_ratio - 1:+.1%}**."
     ),
     unsafe_allow_html=True,
 )
 st.caption(
-    "Descriptive trends, not causal estimates of any law. Universe: ISDs and common districts (including "
-    "those since consolidated, for the years they reported), excluding 9 districts with large virtual or "
-    "non-resident enrollment. Property-wealth metrics start in 2010-11 (tax year 2010)."
+    "These are trends. They don't show that any law caused them. Averages are weighted by enrollment. Covers "
+    "school districts with boundaries, including ones that later merged (for the years they reported). Leaves "
+    "out 9 districts with many virtual or out-of-district students. Measures that use property wealth start in 2010-11."
 )
 
 # ---------------------------------------------------------------- small multiples
 metrics = [
-    ("cv_bounded", "Coefficient of variation", "lower = more equal", ".3f"),
+    ("cv_bounded", "Spread of spending (coefficient of variation)", "lower = more equal", ".3f"),
     ("mcloone", "McLoone index", "higher = more equal", ".3f"),
-    ("restricted_range_ratio", "Restricted range (95th / 5th pct.)", "lower = more equal", ".2f"),
-    ("elasticity", "Wealth elasticity of spending", "0 = spending independent of wealth", ".3f"),
-    ("wealth_spend_corr", "Correlation, log wealth vs. log spending", "0 = no relationship", ".2f"),
-    ("quintile_gap_ratio", "Top vs. bottom wealth quintile spending", "1 = no gap", ".3f"),
+    (
+        "restricted_range_ratio",
+        "High vs. low spenders (95th / 5th percentile)",
+        "lower = more equal",
+        ".2f",
+    ),
+    ("elasticity", "How much spending rises with wealth", "0 = wealth makes no difference", ".3f"),
+    ("wealth_spend_corr", "Link between wealth and spending (correlation)", "0 = no link", ".2f"),
+    ("quintile_gap_ratio", "Wealthiest vs. poorest fifth: spending ratio", "1 = no gap", ".3f"),
 ]
 fig = make_subplots(
     rows=2,
@@ -114,20 +120,21 @@ fig.update_layout(showlegend=False, margin=dict(t=70))
 fig.update_annotations(font=dict(size=13, family="Inter Tight"))
 charts.show(fig, height=560, key="sm")
 marker_text = "; ".join(
-    f'<a href="{e["source"]}">{e["label"]}</a> (enacted {e["date"]}, first affects {sy(e["school_year"])})'
+    f'<a href="{e["source"]}">{e["label"]}</a> (final action {e["date"]}, first applies to {sy(e["school_year"])})'
     for e in events
 )
 html_out(
-    f'<p class="ll-reading">Clay dotted line: law changes with a cited primary source: {marker_text}. Changes '
-    f"after {sy(y1)} are listed but not plotted. CV: solid = within the $5k-$60k plausibility bounds, dotted = "
-    "all district-years (one district reporting $130,791 per student in 2017-18 drives the spike).</p>"
+    f'<p class="ll-reading">The clay dotted line marks a law change, with a link to the bill: {marker_text}. '
+    f"Laws that take effect after {sy(y1)} are listed but not drawn. In the first chart, the solid line leaves out "
+    "district figures below $5,000 or above $60,000 per student, and the dotted line keeps them. One district that "
+    "reported $130,791 per student in 2017-18 causes the spike.</p>"
 )
 view_table(eq, "eq")
 view_sql("equity")
 
 # ---------------------------------------------------------------- ridgeline
 rule()
-st.subheader("The distribution, year by year", anchor=False)
+st.subheader("How spending was spread across students, year by year", anchor=False)
 dist = data.query("equity_distribution")
 grid = np.linspace(6000, 24000, 220)
 fig = go.Figure()
@@ -170,19 +177,21 @@ fig.update_yaxes(
     tickvals=list(range(len(yrs))), ticktext=[sy(int(y)) for y in yrs[::-1]], showgrid=False
 )
 fig.update_xaxes(
-    title=f"operating spending per student ({sy(y1)} $)", tickprefix="$", range=[6000, 24000]
+    title=f"spending per student ({sy(y1)} dollars)", tickprefix="$", range=[6000, 24000]
 )
 fig.update_layout(showlegend=False)
 charts.show(fig, height=640, key="ridge")
 reading(
-    "Each ridge is one year's distribution of students by their district's real spending per student "
-    "(enrollment-weighted density). Clay tick = median. Districts above $24,000 are off the right edge."
+    "Each ridge shows how that year's students were spread across their districts' spending levels, adjusted "
+    "for inflation. The clay tick marks the middle student. Districts above $24,000 per student are off the right edge."
 )
 view_sql("equity_distribution")
 
 # ---------------------------------------------------------------- rank slope
 rule()
-st.subheader(f"Who moved: spending rank, {sy(y0)} vs. {sy(y1)}", anchor=False)
+st.subheader(
+    f"Which districts moved up or down the spending ranks, {sy(y0)} to {sy(y1)}", anchor=False
+)
 rs = data.query("rank_slope")
 rs["move"] = rs.rank_first - rs.rank_latest
 big = rs[rs.enrollment >= 5000].copy()
@@ -208,7 +217,7 @@ for sub, colr in [(up, CLAY), (down, "#31688E")]:
             textfont=dict(size=12, color=colr),
             hovertemplate=f"{nice(r.district_name)}: %{{y}}<extra></extra>",
         )
-fig.update_yaxes(autorange="reversed", title="rank of real spending per student (1 = highest)")
+fig.update_yaxes(autorange="reversed", title="spending rank, adjusted for inflation (1 = highest)")
 fig.update_xaxes(
     tickvals=[0, 1],
     ticktext=[sy(int(rs.first_year.iloc[0])), sy(int(rs.latest_year.iloc[0]))],
@@ -218,29 +227,31 @@ fig.update_xaxes(
 fig.update_layout(showlegend=False)
 charts.show(fig, height=560, key="slope")
 reading(
-    "Districts with at least 5,000 students. Clay: biggest climbers in the spending ranking; blue: biggest "
-    "fallers; grey: everyone else. Ranks are among all districts statewide."
+    "Districts with at least 5,000 students. Clay lines climbed the most in the spending ranks, blue lines fell "
+    "the most, and gray lines are everyone else. Ranks count every district in Texas."
 )
 view_table(rs.sort_values("move", ascending=False), "rs")
 view_sql("rank_slope")
 
 # ---------------------------------------------------------------- charters
 rule()
-st.subheader("Open-enrollment charters (reported separately)", anchor=False)
+st.subheader("Charter schools, shown separately", anchor=False)
 ch = data.query("charters")
 st.caption(
-    "Charters have no boundaries and no local property tax base, so they are outside the wealth analysis. "
-    "TEA operating definition, nominal dollars."
+    "Open-enrollment charter schools have no district boundaries and collect no local property tax, so they "
+    "aren't part of the wealth comparisons. Spending uses TEA's definition and isn't adjusted for inflation."
 )
 st.dataframe(
     ch,
     hide_index=True,
     width="stretch",
     column_config={
-        "operating_tea_def": st.column_config.NumberColumn("operating $", format="localized"),
+        "operating_tea_def": st.column_config.NumberColumn("spending ($)", format="localized"),
         "op_per_student_nominal": st.column_config.NumberColumn(
-            "per student $", format="localized"
+            "per student ($)", format="localized"
         ),
+        "n_charters": "charter schools",
+        "enrollment": "students",
     },
 )
 view_sql("charters")

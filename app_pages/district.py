@@ -40,7 +40,7 @@ default = dl[dl.district_name == "EANES ISD"].cdn.iloc[
 cdn = st.query_params.get("district", default)
 if cdn not in set(dl.cdn):
     st.warning(
-        f"District {html.escape(str(cdn))} is not in the analysis universe; showing Eanes ISD."
+        f"We don't have a profile for district {html.escape(str(cdn))}, so this page shows Eanes ISD instead."
     )
     cdn = default
 labels = {
@@ -64,10 +64,10 @@ page_header(
 )
 if h.enrollment_caution:
     notice(
-        "Enrollment caution.",
-        "TEA reports many students on virtual campuses for this district, or its reported "
-        "enrollment differs sharply from its campus totals, so per-student figures are not comparable to other "
-        "districts. It is excluded from the statewide model and peer comparisons.",
+        "Read per-student figures with care.",
+        "This district either enrolls many students on virtual campuses or reports enrollment far from its "
+        "campus totals. Its per-student numbers don't compare well with other districts, so we leave it out of "
+        "the statewide model and the peer comparisons.",
     )
 
 top_l, top_r = st.columns([2.4, 1], gap="large")
@@ -101,15 +101,15 @@ with top_r:
         ),
         height=230,
     )
-    rs = "pays recapture" if h.recapture_paid > 0 else "no recapture"
+    rs = "sent recapture to the state" if h.recapture_paid > 0 else "sent no recapture to the state"
     html_out(
-        f'<div class="ll-caption">Locator · {rs} in {sy(latest)}'
+        f'<div class="ll-caption">Location · {rs} in {sy(latest)}'
         + (f" ({big_money(h.recapture_paid)})" if h.recapture_paid > 0 else "")
         + "</div>"
     )
     link = f"?district={cdn}"
     html_out(
-        f'<p class="ll-caption">Share this view: <code>/district{html.escape(link)}</code></p>'
+        f'<p class="ll-caption">Link to this profile: <code>/district{html.escape(link)}</code></p>'
     )
 
 with top_l:
@@ -118,34 +118,39 @@ with top_l:
         metric(
             "Spending per student",
             money(h.op_per_student_real),
-            f"state median {money(h.st_spend)}",
+            f"Texas median {money(h.st_spend)}",
         )
     with m[1]:
         metric(
-            "Property wealth / student",
+            "Taxable property per student",
             big_money(h.wealth_per_student_real),
-            f"median {big_money(h.st_wealth)}",
+            f"Texas median {big_money(h.st_wealth)}",
         )
     with m[2]:
         metric(
-            "Median household income",
+            "Typical household income",
             big_money(h.median_household_income),
-            f"median {big_money(h.st_income)}" + (" · top-coded" if h.income_topcoded else ""),
+            f"Texas median {big_money(h.st_income)}"
+            + (" · Census caps this at $250,000" if h.income_topcoded else ""),
         )
     with m[3]:
         metric(
-            "Child poverty", pct(h.child_poverty_rate), f"median {pct(h.st_poverty)} · SAIPE 2024"
+            "Children in poverty",
+            pct(h.child_poverty_rate),
+            f"Texas median {pct(h.st_poverty)} · Census, 2024",
         )
     with m[4]:
         metric(
-            "Econ. disadvantaged", pct(h.econ_disadv_pct), f"median {pct(h.st_econ)} · TAPR 2023-24"
+            "Students from low-income families",
+            pct(h.econ_disadv_pct),
+            f"Texas median {pct(h.st_econ)} · TEA, 2023-24",
         )
     if h.predicted_real == h.predicted_real:
         st.markdown(
             md_money(
-                f"The statewide model predicts **{money(h.predicted_real)}** per student for a district with this wealth, "
-                f"size, need, locale and density; actual is **{money(h.op_per_student_real)}** "
-                f"(standardized residual {h.std_residual:+.2f})."
+                f"Based on its wealth, size, students, setting and density, we'd expect this district to spend "
+                f"**{money(h.predicted_real)}** per student. It actually spends **{money(h.op_per_student_real)}** "
+                f"(score {h.std_residual:+.2f})."
             )
         )
 
@@ -154,7 +159,7 @@ rule()
 a, b = st.columns([1.5, 1], gap="large")
 fn = data.query("district_functions", cdn=cdn)
 with a:
-    st.subheader("Spending by function", anchor=False)
+    st.subheader("What the money is spent on", anchor=False)
     fig = go.Figure()
     fig.add_bar(
         y=fn.function_group,
@@ -167,18 +172,18 @@ with a:
         y=fn.function_group,
         x=fn.peer_median,
         mode="markers",
-        name="peer median",
+        name="similar districts (median)",
         marker=dict(symbol="line-ns", size=18, line=dict(width=3, color=CLAY)),
     )
     fig.update_yaxes(autorange="reversed")
-    fig.update_xaxes(title=f"real $ per student, {sy(latest)}", tickprefix="$")
+    fig.update_xaxes(title=f"$ per student, {sy(latest)}", tickprefix="$")
     fig.update_layout(legend=dict(orientation="h", y=1.1))
     charts.show(fig, height=380, key="fn")
-    reading("Bars: this district. Clay ticks: median of its 10 peers.")
+    reading("Bars show this district. Clay ticks show the median of its 10 most similar districts.")
     view_table(fn, "fn")
     view_sql("district_functions")
 with b:
-    st.subheader("Revenue mix", anchor=False)
+    st.subheader("Where the money comes from", anchor=False)
     rv = data.query("district_revenue", cdn=cdn)
     r = rv[rv.year == latest].iloc[0]
     fig = go.Figure()
@@ -199,7 +204,9 @@ with b:
         )
     fig.update_layout(barmode="stack", xaxis=dict(tickformat=".0%", range=[0, 1]), showlegend=False)
     charts.show(fig, height=130, key="rev")
-    reading(f"Share of all-funds revenue, {sy(latest)}. Local includes M&O and I&S property taxes.")
+    reading(
+        f"Share of all revenue, {sy(latest)}. Local includes property taxes for operations and for debt."
+    )
     view_table(rv, "rev")
     view_sql("district_revenue")
 
@@ -214,7 +221,7 @@ fig.add_scatter(
     fill="toself",
     fillcolor="rgba(92,88,80,0.14)",
     line=dict(width=0),
-    name="peer middle 50%",
+    name="middle half of similar districts",
     hoverinfo="skip",
 )
 fig.add_scatter(
@@ -222,7 +229,7 @@ fig.add_scatter(
     y=tr.state_median,
     mode="lines",
     line=dict(color=INK_2, dash="dot"),
-    name="state median",
+    name="Texas median",
 )
 fig.add_scatter(
     x=tr.year,
@@ -231,7 +238,7 @@ fig.add_scatter(
     line=dict(color=CLAY, width=2.4),
     name=nice(h.district_name),
 )
-fig.update_yaxes(tickprefix="$", title=f"real operating $ per student ({sy(latest)} $)")
+fig.update_yaxes(tickprefix="$", title=f"spending per student ({sy(latest)} dollars)")
 fig.update_layout(legend=dict(orientation="h", y=1.1))
 charts.show(fig, height=360, key="trend")
 view_table(tr, "trend")
@@ -239,7 +246,7 @@ view_sql("district_trend")
 
 # ---------------------------------------------------------------- peers + fingerprints
 rule()
-st.subheader("Peers and spending fingerprints", anchor=False)
+st.subheader("Similar districts and their spending fingerprints", anchor=False)
 pe = data.query("district_peers", cdn=cdn)
 st.dataframe(
     pe.assign(profile="/district?district=" + pe.cdn),
@@ -247,17 +254,22 @@ st.dataframe(
     width="stretch",
     column_config={
         "wealth_per_student_real": st.column_config.NumberColumn(
-            "wealth/student", format="localized"
+            "property per student ($)", format="localized"
         ),
-        "op_per_student_real": st.column_config.NumberColumn("spend/student", format="localized"),
-        "econ_disadv_pct": st.column_config.NumberColumn("econ. dis.", format="percent"),
-        "recapture_paid": st.column_config.NumberColumn("recapture", format="localized"),
+        "op_per_student_real": st.column_config.NumberColumn(
+            "spends per student ($)", format="localized"
+        ),
+        "econ_disadv_pct": st.column_config.NumberColumn("low-income students", format="percent"),
+        "recapture_paid": st.column_config.NumberColumn("sent to state ($)", format="localized"),
         "profile": st.column_config.LinkColumn("profile", display_text="open →"),
+        "peer_rank": "match",
+        "cdn": "district ID",
+        "district_name": "district",
     },
 )
 st.caption(
-    "Peers: the 10 nearest districts on standardized log enrollment, log property wealth per student and "
-    "economically disadvantaged share (latest year)."
+    "Similar districts are the 10 closest matches on enrollment, property wealth per student and share of "
+    "students from low-income families, in the latest year."
 )
 fp = data.query("peer_fingerprints", cdn=cdn)
 order = [cdn] + pe.cdn.tolist()
@@ -298,11 +310,11 @@ for i, c in enumerate(order[:12]):
     with cols[i % 6]:
         charts.show(f, height=190, key=f"fp_{i}")
 reading(
-    "Each petal is one function group (labelled on the first glyph); length = the district's share of operating "
-    "spending on it relative to the state median share (grey ring = state median, capped at 3×). Similar shapes "
-    "mean similar budgets."
+    "Each petal is one kind of spending, such as instruction or transportation (labeled on the first glyph). A "
+    "longer petal means the district puts a bigger share of its budget there than the typical Texas district. The "
+    "gray ring marks the typical share. Petals stop at 3 times the typical share. Similar shapes mean similar budgets."
 )
-with st.expander("Fingerprints as a table"):
+with st.expander("Show the fingerprints as a table"):
     st.dataframe(
         fp.pivot_table(index="district_name", columns="petal", values="share").round(3),
         width="stretch",
@@ -316,62 +328,72 @@ with t1:
     st.subheader("Tax rates", anchor=False)
     tx = data.query("district_taxes", cdn=cdn)
     fig = go.Figure()
-    fig.add_bar(x=tx.year, y=tx.mo_rate, name="M&O", marker_color=INK_2)
-    fig.add_bar(x=tx.year, y=tx.is_rate, name="I&S (debt)", marker_color=CLAY)
+    fig.add_bar(x=tx.year, y=tx.mo_rate, name="Operations (M&O)", marker_color=INK_2)
+    fig.add_bar(x=tx.year, y=tx.is_rate, name="Debt (I&S)", marker_color=CLAY)
     fig.update_layout(
-        barmode="stack", yaxis_title="rate per $100", legend=dict(orientation="h", y=1.1)
+        barmode="stack",
+        yaxis_title="rate per $100 of property",
+        legend=dict(orientation="h", y=1.1),
     )
     charts.show(fig, height=300, key="tax")
     view_table(tx, "tax")
     view_sql("district_taxes")
 with t2:
-    st.subheader("Debt outstanding", anchor=False)
+    st.subheader("Debt owed", anchor=False)
     db = data.query("district_debt", cdn=cdn)
     if db.empty:
-        st.caption("No outstanding debt reported to the Texas Bond Review Board.")
+        st.caption("This district reports no debt to the Texas Bond Review Board.")
     else:
         fig = go.Figure()
-        fig.add_bar(x=db.fiscal_year, y=db.cib_principal, name="CIB principal", marker_color=INK_2)
-        fig.add_bar(x=db.fiscal_year, y=db.cab_principal, name="CAB principal", marker_color=CLAY)
+        fig.add_bar(
+            x=db.fiscal_year, y=db.cib_principal, name="regular bonds (CIB)", marker_color=INK_2
+        )
+        fig.add_bar(
+            x=db.fiscal_year,
+            y=db.cab_principal,
+            name="deferred-interest bonds (CAB)",
+            marker_color=CLAY,
+        )
         fig.add_scatter(
             x=db.fiscal_year,
             y=db.tax_supported_principal,
             mode="lines",
-            name="tax-supported total",
+            name="total voter-approved debt",
             line=dict(color="#1B1A17", dash="dot"),
         )
         fig.update_layout(
             barmode="stack",
-            yaxis_title="$ principal outstanding",
+            yaxis_title="$ borrowed and still owed",
             legend=dict(orientation="h", y=1.12),
         )
         charts.show(fig, height=300, key="debt")
         st.markdown(
             md_money(
-                f"FY{int(h.debt_fy)}: **{big_money(h.tax_supported_principal)}** tax-supported, "
-                f"**{money(h.debt_per_student)}** per student; CAB share {pct(h.cab_share_principal, 1)}."
+                f"Fiscal year {int(h.debt_fy)}: owes **{big_money(h.tax_supported_principal)}** in voter-approved debt, "
+                f"or **{money(h.debt_per_student)}** per student. {pct(h.cab_share_principal, 1)} of it is in "
+                "deferred-interest bonds."
             )
         )
         view_table(db, "debt")
     view_sql("district_debt")
 st.info(
-    "Bond election history is not available yet (BRB election search not reachable from the build).",
+    "Bond election history isn't available yet. Our build couldn't reach the Texas Bond Review Board's election search.",
     icon=None,
 )
 
 # ---------------------------------------------------------------- growth & building
 rule()
-st.subheader("Growth and building", anchor=False)
+st.subheader("Growth and new schools", anchor=False)
 g1, g2 = st.columns([1.4, 1], gap="large")
 with g1:
     fig = go.Figure(
         go.Scatter(x=tr.year, y=tr.enrollment, mode="lines+markers", line=dict(color=INK_2))
     )
-    fig.update_layout(yaxis_title="fall enrollment")
+    fig.update_layout(yaxis_title="students enrolled in the fall")
     charts.show(fig, height=260, key="enr")
     st.markdown(
-        f"5-year change **{pct(h.growth_5y)}**, 10-year **{pct(h.growth_10y)}**; "
-        f"**{int(h.new_campuses_since_2016_17 or 0)}** campuses opened since 2016-17 and still open."
+        f"Enrollment changed **{pct(h.growth_5y)}** over 5 years and **{pct(h.growth_10y)}** over 10 years. "
+        f"**{int(h.new_campuses_since_2016_17 or 0)}** campuses opened since 2016-17 and are still open."
     )
 with g2:
     cp = data.query("district_campuses", cdn=cdn)
@@ -408,7 +430,7 @@ with g2:
                 height=260,
             )
         )
-        reading("Campuses: clay = opened 2016-17 or later.")
+        reading("Clay dots are campuses that opened in 2016-17 or later.")
     view_sql("district_campuses")
 
 rule()

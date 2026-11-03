@@ -39,9 +39,9 @@ page_header(
 g = data.query("growth")
 camp = data.query("new_campuses")
 show_flagged = st.toggle(
-    "Include districts flagged for large virtual or non-resident enrollment",
+    "Include districts with many virtual or out-of-district students",
     value=False,
-    help="Nine districts whose reported enrollment includes many students who do not live there.",
+    help="Nine districts count many students who don't live there, so their growth figures aren't comparable.",
 )
 gv = g if show_flagged else g[~g.enrollment_caution]
 
@@ -51,16 +51,16 @@ with c1:
     metric(
         "Campuses opened since 2016-17",
         f"{len(camp):,}",
-        f"{int((~camp.is_charter).sum()):,} in ISDs, {int(camp.is_charter.sum()):,} charter",
+        f"{int((~camp.is_charter).sum()):,} in school districts, {int(camp.is_charter.sum()):,} charter schools",
     )
 with c2:
     metric(
-        "Districts growing >10% in 5 years",
+        "Districts that grew more than 10% in 5 years",
         f"{int((gv.growth_5y > 0.10).sum()):,}",
         f"of {len(gv):,}",
     )
 with c3:
-    metric("Districts shrinking >10%", f"{int((gv.growth_5y < -0.10).sum()):,}")
+    metric("Districts that shrank more than 10%", f"{int((gv.growth_5y < -0.10).sum()):,}")
 top10 = (
     gv.dropna(subset=["enroll_10y_ago"])
     .assign(d=lambda x: x.enroll_now - x.enroll_10y_ago)
@@ -70,9 +70,9 @@ isd_new = camp[~camp.is_charter]
 share_top = isd_new.district_name.isin(top10.district_name).mean()
 with c4:
     metric(
-        "ISD new campuses in the 10 fastest-adding districts",
+        "New district campuses in the 10 fastest-growing districts",
         pct(share_top, 0),
-        "fastest-adding = most students added over 10 years",
+        "fastest-growing means most students added over 10 years",
     )
 
 # ---------------------------------------------------------------- where Texas is building
@@ -84,7 +84,7 @@ yr = st.slider(
     int(camp.first_year.max()),
     int(camp.first_year.max()),
     format="%d",
-    help="School year ending (2017 = 2016-17).",
+    help="Pick the last school year to show. 2017 means 2016-17.",
 )
 shown = camp[camp.first_year <= yr]
 geo = maps.features_with(
@@ -142,14 +142,14 @@ with left:
         )
     )
     reading(
-        f"Hexagons: new campuses opened 2016-17 through {sy(yr)}, counted on a 9 km hex grid (taller = more). "
-        "District fill: 10-year enrollment change (clay = growing, teal = shrinking)."
+        f"Each hexagon counts new campuses opened from 2016-17 through {sy(yr)} within about 9 km. Taller "
+        "hexagons have more. District colors show 10-year enrollment change: clay districts grew, teal districts shrank."
     )
     view_table(shown, "camp")
     view_sql("new_campuses", "growth")
 with right:
     legend_diverging("10-year enrollment change", "shrinking", "growing")
-    st.markdown("**Fastest-adding districts** (students added, 10 years)")
+    st.markdown("**Districts that added the most students** (10 years)")
     st.dataframe(
         top10.assign(name=top10.district_name.map(nice))[
             ["name", "enroll_10y_ago", "enroll_now", "new_campuses_since_2016_17"]
@@ -163,14 +163,14 @@ with right:
         },
     )
     st.caption(
-        "New campus = an NCES school ID that first appears after 2015-16. A new ID can also mean a "
-        "reorganised campus, so this is an upper bound on new buildings. For 76% of new ISD campuses with a "
-        "TEA AskTED status date, the date falls within a year of NCES's first listing."
+        "A new campus here is a school whose federal (NCES) ID first appears after 2015-16. A new ID can also mean "
+        "an existing school was reorganized, so this count may run a little high. For 76% of new district campuses "
+        "that TEA's directory dates, TEA's date is within a year of the federal listing."
     )
 
 # ---------------------------------------------------------------- capital intensity
 rule()
-st.subheader("Capital intensity vs. growth", anchor=False)
+st.subheader("Construction spending vs. growth", anchor=False)
 ci = gv.dropna(subset=["growth_5y", "capital_per_student_5y_avg"])
 ci = ci[(ci.enroll_5y_ago >= 500) & (ci.capital_per_student_5y_avg > 0)]
 b, (lo, hi), r2, n = wls_hc1(ci.growth_5y, np.log(ci.capital_per_student_5y_avg), ci.enroll_now)
@@ -203,27 +203,28 @@ for lab, colr in [
     )
 fig.update_xaxes(tickformat=".0%", title="5-year enrollment change")
 fig.update_yaxes(
-    type="log", title=f"capital spending per student, 5-yr avg ({sy(int(latest))} $, log)"
+    type="log",
+    title=f"building and equipment spending per student, 5-year average ({sy(int(latest))} dollars, log scale)",
 )
 fig.update_layout(legend=dict(orientation="h", y=1.08))
 charts.show(fig, height=440, key="ci")
 st.markdown(
-    f"Ten more percentage points of growth go with about **{np.exp(b * 0.1) - 1:+.0%}** more capital spending "
-    f"per student (95% CI {np.exp(lo * 0.1) - 1:+.0%} to {np.exp(hi * 0.1) - 1:+.0%}; n = {n:,} districts with "
-    "at least 500 students, enrollment-weighted). Capital = facilities acquisition and construction (function 81) "
-    "plus capital outlay objects (6600), all funds."
+    f"For every 10 more percentage points of growth, districts spend about **{np.exp(b * 0.1) - 1:+.0%}** more per "
+    f"student on buildings and equipment (likely range {np.exp(lo * 0.1) - 1:+.0%} to {np.exp(hi * 0.1) - 1:+.0%}; "
+    f"{n:,} districts with at least 500 students, weighted by enrollment). This counts construction and land "
+    "(PEIMS function 81) plus equipment and other capital purchases (object 6600), across all funds."
 )
 view_table(ci[["cdn", "district_name", "growth_5y", "capital_per_student_5y_avg", "flag"]], "ci")
 view_sql("growth")
 
 # ---------------------------------------------------------------- proxies
 rule()
-st.subheader("Cost per new seat: proxies", anchor=False)
+st.subheader("Rough cost per new seat", anchor=False)
 html_out(
-    f'<p class="ll-reading">Texas has no statewide dataset of school construction cost per square foot, so none is '
-    f"shown. These are {term('proxy', 'proxies')}: real capital spending over five years divided by students added "
-    f"(districts adding at least 50) or by campuses opened in the same window. They mix new schools with "
-    f"renovation, land and equipment.</p>"
+    f'<p class="ll-reading">Texas has no statewide data on school construction cost per square foot, so we don\'t '
+    f"show one. These {term('proxy', 'proxies')} are rough stand-ins: building and equipment spending over five "
+    f"years, divided by students added (for districts that added at least 50) or by campuses opened in those years. "
+    f"They mix new schools with renovations, land and equipment.</p>"
 )
 px = gv.dropna(subset=["proxy_capital_per_new_student"]).sort_values(
     "proxy_capital_per_new_student"
@@ -244,15 +245,18 @@ st.dataframe(
     width="stretch",
     column_config={
         "capital_5y_real": st.column_config.NumberColumn(
-            "capital, 5 yrs (real $)", format="localized"
+            "building spending, 5 years ($, inflation-adjusted)", format="localized"
         ),
         "proxy_capital_per_new_student": st.column_config.NumberColumn(
-            "PROXY: $ per student added", format="localized"
+            "proxy: $ per student added", format="localized"
         ),
         "proxy_capital_per_new_campus": st.column_config.NumberColumn(
-            "PROXY: $ per new campus", format="localized"
+            "proxy: $ per new campus", format="localized"
         ),
-        "small_district": "under 500",
+        "small_district": "under 500 students",
+        "district_name": "district",
+        "students_added_5y": "students added, 5 years",
+        "new_campuses_5y": "campuses opened, 5 years",
     },
 )
 view_sql("growth")

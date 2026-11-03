@@ -55,12 +55,12 @@ def glossary_help(key: str) -> str:
 
 
 def view_sql(*names: str) -> None:
-    with st.expander("View SQL"):
+    with st.expander("Show the SQL"):
         for n in names:
             st.code(data.sql_text(n), language="sql")
 
 
-def view_table(df: pd.DataFrame, key: str, label: str = "View as table", **kw) -> None:
+def view_table(df: pd.DataFrame, key: str, label: str = "Show as a table", **kw) -> None:
     if st.toggle(label, key=f"tbl_{key}"):
         st.dataframe(df, hide_index=True, width="stretch", **kw)
 
@@ -77,7 +77,7 @@ def legend_quantile(title: str, breaks: list[float], fmt, palette=SEQUENTIAL_7) 
         )
     html_out(
         f'<div class="ll-legend"><div class="ll-leg-title">{html.escape(title)} '
-        f'<span class="ll-caption">(7 quantile classes)</span></div>{"".join(items)}</div>'
+        f'<span class="ll-caption">(each color covers about 1 in 7 districts)</span></div>{"".join(items)}</div>'
     )
 
 
@@ -98,8 +98,8 @@ def legend_bivariate() -> None:
     html_out(
         '<div class="ll-legend ll-bivar"><div class="grid">' + "".join(cells) + "</div>"
         '<div class="axes"><div>more spending per student &uarr;</div><div>more property wealth per student &rarr;</div>'
-        '<div class="ll-caption">Each axis split into thirds of districts. Dark purple: wealthy and high-spending. '
-        "Pink: wealthy, lower spending. Blue: less wealthy, higher spending.</div></div></div>"
+        '<div class="ll-caption">Districts are split into thirds on each measure. Dark purple: high wealth and high '
+        "spending. Pink: high wealth, lower spending. Blue: lower wealth, higher spending.</div></div></div>"
     )
 
 
@@ -110,8 +110,8 @@ def require_marts(*names: str) -> bool:
         return True
     items = "".join(f"<li><code>data/marts/{html.escape(n)}.parquet</code></li>" for n in missing)
     html_out(
-        '<div class="ll-notice"><strong>Data not built yet.</strong> This page needs marts produced by '
-        f"<code>make data</code>:<ul>{items}</ul>No placeholder numbers are shown in the meantime.</div>"
+        '<div class="ll-notice"><strong>The data for this page isn\'t built yet.</strong> Run '
+        f"<code>make data</code> to create these files:<ul>{items}</ul>Until then, this page shows no numbers.</div>"
     )
     return False
 

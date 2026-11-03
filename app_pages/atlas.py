@@ -37,12 +37,17 @@ qp = st.query_params
 years = data.query("meta_years").year.tolist()
 latest = years[-1]
 LAYERS = data.config("metrics")["layers"]
-VIEWS = ["Bivariate", "Single metric", "3D Wealth Relief"]
+VIEWS = ["Bivariate", "Single metric", "3D Wealth Relief"]  # internal keys (also used in URLs)
+VIEW_LABELS = {
+    "Bivariate": "Combined",
+    "Single metric": "One measure",
+    "3D Wealth Relief": "3D Wealth Relief",
+}
 
 page_header(
     "Atlas · Texas school districts",
     "Where the money goes in Texas schools",
-    "Property wealth, spending, recapture, debt and growth for every Texas school district. "
+    "Compare property wealth, spending, debt and growth across every Texas school district. "
     "Click a district to see its numbers.",
 )
 
@@ -65,8 +70,9 @@ with c1:
 with c2:
     view = (
         st.segmented_control(
-            "View",
+            "Map view",
             VIEWS,
+            format_func=VIEW_LABELS.get,
             default=stop["view"] if stop else qp.get("view", "Bivariate"),
             key=f"view_{st.session_state.get('tour_step', 'x')}",
         )
@@ -77,7 +83,7 @@ with c3:
     disabled = view != "Single metric"
     default_metric = stop["metric"] if stop else qp.get("metric", "wealth")
     metric = st.selectbox(
-        "Layer",
+        "Measure (for the One measure view)",
         metric_keys,
         index=metric_keys.index(default_metric if default_metric in LAYERS else "wealth"),
         format_func=lambda k: f"{LAYERS[k]['theme']} · {LAYERS[k]['label']}",
@@ -86,7 +92,7 @@ with c3:
     )
 with c4:
     overlays = st.multiselect(
-        "Overlays",
+        "Also show",
         ["Counties", "ESC regions", "Metro areas", "All campuses", "New campuses since 2016-17"],
         default=["Counties"],
     )
@@ -97,7 +103,7 @@ names = df.sort_values("district_name")
 search = st.selectbox(
     "Find a district",
     ["(all of Texas)"] + names.district_name.map(nice).tolist(),
-    help="Type to search; the map flies to the district.",
+    help="Type a district name. The map zooms to it.",
 )
 
 # ---------------------------------------------------------------- colours
@@ -117,7 +123,10 @@ elif view == "3D Wealth Relief":
     df["fill"] = maps.diverging_colors(df.op_per_student, med)
     cap = df.wealth_per_student.quantile(0.99)
     df["elev"] = df.wealth_per_student.clip(upper=cap).fillna(0) / cap * 120_000
-    legend_note = f"Height capped at the 99th percentile ({fmt_map['money_k'](cap)} per student)."
+    legend_note = (
+        f"The tallest 1% of districts are cut off at {fmt_map['money_k'](cap)} per student "
+        "so the rest stay visible."
+    )
 else:
     spec = LAYERS[metric]
     col = df[spec["column"]].astype(float)
@@ -143,7 +152,7 @@ def metric_line(r) -> str:
         return f"Debt tax rate: {maps.cents_per_100(v)}"
     if metric == "residual":
         side = "more" if v > 0 else "less"
-        return f"Spends {side} than districts like it would be expected to (score {v:+.1f})"
+        return f"Spends {side} than expected for a district like it (score {v:+.1f})"
     if metric == "recapture":
         return (
             "Sends no money to the state"
@@ -279,22 +288,24 @@ with left:
         key=f"atlas_{view}_{metric}_{year}",
     )
     html_out(
-        '<div class="ll-source">N ↑ · Web Mercator, scale varies with latitude · Sources: TEA PEIMS, Comptroller '
-        "certified values, Census SAIPE/ACS, NCES EDGE, Texas Bond Review Board · Data as of "
-        f"{sy(latest)} (spending), FY{int(data.query('debt_state_year').fiscal_year.max())} (debt) · Basemap © CARTO, © OpenStreetMap</div>"
+        '<div class="ll-source">N ↑ · Map scale varies with latitude · Sources: Texas Education Agency (PEIMS), '
+        "Texas Comptroller property values, U.S. Census Bureau, NCES, Texas Bond Review Board · Spending through "
+        f"{sy(latest)}, debt through fiscal year {int(data.query('debt_state_year').fiscal_year.max())} · "
+        "Basemap © CARTO, © OpenStreetMap</div>"
     )
 
 with right:
     if view == "Bivariate":
         legend_bivariate()
         reading(
-            "Districts with the same colour sit in the same third of Texas for both wealth and spending."
+            "Two districts with the same color rank about the same on both wealth and spending."
         )
     elif view == "3D Wealth Relief":
-        legend_diverging("Spending per student vs. state median", "below median", "above median")
+        legend_diverging("Spending per student vs. Texas median", "below median", "above median")
         reading(
-            "Height = property wealth per student. Tall teal ridges are wealthy districts that spend "
-            "below the median. " + legend_note
+            "Taller districts have more property wealth per student. Teal districts spend less than the Texas "
+            "median and clay districts spend more, so a tall teal district is wealthy but spends below the median. "
+            + legend_note
         )
     else:
         spec = LAYERS[metric]
@@ -325,9 +336,9 @@ with right:
         for label, val in [
             ("Students", f"{r.enrollment:,.0f}" if pd.notna(r.enrollment) else "n/a"),
             ("Spending per student", money(r.op_per_student)),
-            ("Property wealth per student", fmt_map["money_k"](r.wealth_per_student)),
-            ("Median household income", fmt_map["money_k"](r.median_household_income)),
-            ("Recapture paid", big_money(r.recapture_paid)),
+            ("Taxable property per student", fmt_map["money_k"](r.wealth_per_student)),
+            ("Typical household income", fmt_map["money_k"](r.median_household_income)),
+            ("Sent to the state (recapture)", big_money(r.recapture_paid)),
         ]:
             st.markdown(f"**{label}**  \n`{val}`")
         st.page_link(
@@ -338,7 +349,7 @@ with right:
 
     with st.expander("Take the tour" if not tour_on else "Tour", expanded=tour_on):
         if not tour_on:
-            if st.button("Start the guided tour", type="primary"):
+            if st.button("Start the tour", type="primary"):
                 st.session_state.tour_step = 0
                 st.rerun()
         else:
@@ -351,7 +362,7 @@ with right:
                 f'<div class="ll-caption">{html.escape(s["number_label"])}</div></div>'
             )
             b1, b2, b3 = st.columns(3)
-            if b1.button("← Prev", disabled=i == 0):
+            if b1.button("← Back", disabled=i == 0):
                 st.session_state.tour_step -= 1
                 st.query_params["tour"] = str(st.session_state.tour_step)
                 st.rerun()
@@ -359,7 +370,7 @@ with right:
                 st.session_state.tour_step += 1
                 st.query_params["tour"] = str(st.session_state.tour_step)
                 st.rerun()
-            if b3.button("End"):
+            if b3.button("Exit tour"):
                 del st.session_state.tour_step
                 st.query_params.pop("tour", None)
                 st.rerun()
@@ -381,7 +392,7 @@ view_table(
         ]
     ].sort_values("district_name"),
     "atlas",
-    label="View map as table",
+    label="Show the map as a table",
     column_config={
         "wealth_per_student": st.column_config.NumberColumn(format="localized"),
         "op_per_student": st.column_config.NumberColumn(format="localized"),
@@ -406,10 +417,10 @@ f1, f2, f3 = st.columns(3, gap="large")
 with f1:
     html_out(
         '<div class="ll-finding"><div class="num">01</div><p>In '
-        f"{sy(int(last.year))}, property wealth barely predicts operating spending per student: a district with 10% "
-        f"more wealth per student spends about <b>{last.elasticity * 10:+.2f}%</b> more (95% CI "
-        f"{last.elasticity_lo * 10:+.2f}% to {last.elasticity_hi * 10:+.2f}%). In {sy(int(first.year))} it was "
-        f"{first.elasticity * 10:+.2f}%.</p></div>"
+        f"{sy(int(last.year))}, a district's property wealth told you almost nothing about its spending per "
+        f"student. Ten percent more wealth went with <b>{last.elasticity * 10:+.2f}%</b> more spending (likely range "
+        f"{last.elasticity_lo * 10:+.2f}% to {last.elasticity_hi * 10:+.2f}%). In {sy(int(first.year))} the "
+        f"figure was {first.elasticity * 10:+.2f}%.</p></div>"
     )
     fig = go.Figure()
     fig.add_scatter(x=eq.year, y=eq.elasticity, mode="lines+markers", line=dict(color=INK_2))
@@ -422,16 +433,18 @@ with f1:
         hoverinfo="skip",
     )
     fig.add_hline(y=0, line=dict(color=DIVERGING_7[0], width=1, dash="dot"))
-    fig.update_layout(showlegend=False, yaxis_title="elasticity", margin=dict(t=10))
+    fig.update_layout(
+        showlegend=False, yaxis_title="% more spending per 1% more wealth", margin=dict(t=10)
+    )
     charts.show(fig, height=180, key="f1")
     st.page_link("app_pages/wealth_spending.py", label="Explore →")
 with f2:
     html_out(
         '<div class="ll-finding"><div class="num">02</div><p>'
-        f"All <b>{int(over.n_small)} of the {int(over.n)}</b> districts that spend most above prediction have fewer than "
-        f"500 students (median {over.median_enrollment:,.0f}); they spend {money(over.median_actual)} per student "
-        f"against {money(over.median_predicted)} predicted. Statewide, {pct(over.share_small_statewide, 0)} of "
-        "districts are that small.</p></div>"
+        f"<b>{int(over.n_small)} of the {int(over.n)}</b> districts that spend furthest above our prediction have "
+        f"fewer than 500 students. The typical one has {over.median_enrollment:,.0f} students and spends "
+        f"{money(over.median_actual)} per student, against {money(over.median_predicted)} predicted. Only "
+        f"{pct(over.share_small_statewide, 0)} of Texas districts are that small.</p></div>"
     )
     ol = data.query("outliers_latest")
     fig = go.Figure(
@@ -442,21 +455,22 @@ with f2:
             marker=dict(size=5, color=np.where(ol.direction.eq("over"), "#A8432A", "#B9B2A3")),
         )
     )
-    fig.update_xaxes(type="log", title="students (log)")
+    fig.update_xaxes(type="log", title="students (log scale)")
     fig.update_layout(yaxis_title="above or below prediction", margin=dict(t=10))
     charts.show(fig, height=180, key="f2")
     st.page_link("app_pages/wealth_spending.py", label="Explore →")
 with f3:
     html_out(
         '<div class="ll-finding"><div class="num">03</div><p>'
-        f"Districts paid <b>{big_money(rec.total_paid)}</b> in recapture in {sy(latest)}. "
-        f"{big_money(rec.paid_by_mineral_majority)} ({rec.paid_by_mineral_majority / rec.total_paid:.0%}) came from "
-        f"{int(rec.payers_mineral_majority)} districts where minerals are most of the tax base, and "
-        f"{int(rec.payers_below_median_income)} of the {int(rec.payers)} payers have below-median household income.</p></div>"
+        f"Districts sent <b>{big_money(rec.total_paid)}</b> to the state in recapture in {sy(latest)}. "
+        f"{big_money(rec.paid_by_mineral_majority)} of it ({rec.paid_by_mineral_majority / rec.total_paid:.0%}) came "
+        f"from {int(rec.payers_mineral_majority)} districts where oil, gas and minerals make up most of the tax base. "
+        f"{int(rec.payers_below_median_income)} of the {int(rec.payers)} paying districts have below-median "
+        "household income.</p></div>"
     )
     ry = data.query("recapture_by_year")
     fig = go.Figure(go.Bar(x=ry.year, y=ry.recapture_real / 1e9, marker_color=INK_2))
-    fig.update_layout(yaxis_title=f"$B ({sy(latest)} $)", margin=dict(t=10))
+    fig.update_layout(yaxis_title=f"$ billions ({sy(latest)} dollars)", margin=dict(t=10))
     charts.show(fig, height=180, key="f3")
     st.page_link("app_pages/recapture.py", label="Explore →")
 view_sql("findings", "finding_outliers", "finding_recapture", "recapture_by_year")
