@@ -49,7 +49,9 @@ tea_tapr:
   publisher: Texas Education Agency
   landing: https://rptsvr1.tea.texas.gov/perfreport/tapr/2024/download.html
   files: []
-  status: not yet downloaded
+  status: verified 2026-11-03
+  notes: 2023-24 district profile (Advanced Download, PROF); codes from TEA's TAPR data dictionary. 2024-25 not
+    yet published.
 census_saipe:
   name: Census SAIPE school district estimates (API)
   publisher: U.S. Census Bureau
@@ -76,30 +78,33 @@ nces_school_points:
   name: NCES EDGE public school locations 2024-25
   publisher: National Center for Education Statistics
   landing: https://catalog.data.gov/dataset/public-school-locations-2024-25
-  files:
-  - name: EDGE_GEOCODE_PUBLICSCH_2425.zip
-    url: https://nces.ed.gov/programs/edge/data/EDGE_GEOCODE_PUBLICSCH_2425.zip
-  status: not yet downloaded
+  files: []
+  status: verified 2026-11-03
+  notes: EDGE public school geocodes 2015-16 to 2024-25 (2014-15 not posted). New campus = NCES school ID first
+    appearing in a year after 2015-16.
 nces_ccd_lea:
   name: NCES Common Core of Data LEA directory (CDN <-> LEAID crosswalk)
   publisher: National Center for Education Statistics
   landing: https://nces.ed.gov/ccd/files.asp
   files: []
-  status: not yet downloaded
+  status: verified 2026-11-03
+  notes: CCD LEA directory 2023-24 (ccd_lea_029_2324_w_1a_073124); ST_LEAID = 'TX-' + CDN.
 brb_bond_elections:
   name: Texas Bond Review Board local bond elections (school districts)
   publisher: Texas Bond Review Board
   landing: https://debtsearch.brb.texas.gov/bond_elections_search.aspx
   discovery: https://api.us.socrata.com/api/catalog/v1?domains=data.texas.gov&q=bond%20review%20board
-  notes: Portal copies listed a last update of June 2020; check freshness before use.
-  status: not yet downloaded
+  notes: The Open Data Portal entry 'Local Debt Bond Election Results' (djkj-euda) is only a link to the BRB search
+    site; its metadata was last updated in 2017. Bond election analysis is pending access to debtsearch.brb.texas.gov
+    or an export.
+  status: 'BLOCKED: debtsearch.brb.texas.gov not reachable from the build environment'
 brb_debt:
   name: Texas Bond Review Board Data Center ISD debt pages
   publisher: Texas Bond Review Board
-  landing: https://data.brb.texas.gov/local/isd/60.html
-  notes: per-district CSVs at https://data.brb.texas.gov/charts/local/isd/<brb_id>/<chart>.csv; BRB id is not the
-    CDN
-  status: not yet downloaded
+  landing: https://data.texas.gov/d/3qmf-seku
+  notes: Debt Outstanding By Issuance Local By Year (data updated 2026-09-10), ISD rows FY2016-FY2025; BRB Data
+    Center CAB/CIB CSVs per district. BRB govid = CDN (e.g. 037-901-02); 947/947 issuers hand-reviewed in data/qa/brb_crosswalk_review.csv.
+  status: verified 2026-11-03
 fred_cpi:
   name: CPI-U, all items (CPIAUCSL)
   publisher: Federal Reserve Bank of St. Louis (FRED), from BLS
@@ -116,3 +121,27 @@ tea_cptd:
     'Page not found'. TEA's tax year 2022 file lists 966 districts; the other 48 are filled from the Comptroller
     PVS (ASGN T2).
   status: verified 2026-11-03
+tea_askted:
+  name: TEA AskTED school and district directory
+  publisher: Texas Education Agency
+  landing: https://tealprod.tea.state.tx.us/Tea.AskTed.Web/Forms/DownloadFile.aspx
+  status: verified 2026-11-03
+  notes: District type, ESC region, NCES IDs, campus status dates.
+census_cb:
+  name: Census cartographic boundary files 2024 (counties, CBSAs, state)
+  publisher: U.S. Census Bureau
+  landing: https://www2.census.gov/geo/tiger/GENZ2024/shp/
+  status: verified 2026-11-03
+  notes: Map overlays only.
+tea_fsr:
+  name: TEA PEIMS Financial Standard Reports (Actual PWR workbooks)
+  publisher: Texas Education Agency
+  landing: https://tea.texas.gov/about-tea/state-funding/state-funding-reports-and-data/peims-financial-standard-reports
+  status: verified 2026-11-03
+  notes: Used for reconciliation (2016-17, 2020-21, 2024-25) and district spot checks.
+tea_fasrg:
+  name: TEA Financial Accountability System Resource Guide, Update 20 (FAR Appendices)
+  publisher: Texas Education Agency
+  landing: https://tea.texas.gov/data-reports/financial-compliance/financial-accountability-system-resource-guide
+  status: verified 2026-11-03
+  notes: Source for every fund, function and object code.
