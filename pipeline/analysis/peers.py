@@ -15,7 +15,7 @@ def run(con) -> None:
     df = con.execute("""
         SELECT y.cdn, y.enrollment, y.wealth_per_student_real, d.econ_disadv_pct
         FROM mart_district_year y JOIN mart_districts d USING (cdn)
-        WHERE y.is_current AND y.year = (SELECT max(year) FROM mart_district_year)
+        WHERE y.is_current AND NOT d.enrollment_caution AND y.year = (SELECT max(year) FROM mart_district_year)
           AND y.enrollment > 0 AND y.wealth_per_student_real > 0 AND d.econ_disadv_pct IS NOT NULL
     """).df()
     X = StandardScaler().fit_transform(

@@ -1,7 +1,7 @@
 """Statewide spending equity by school year -> mart_equity_state_year.
 
 Universe: current and consolidated/closed ISDs (mart_district_year), enrollment > 0 and operating
-spending > 0. All metrics are enrollment-weighted and use real operating spending per student.
+spending > 0, excluding districts flagged enrollment_caution (large virtual or non-resident enrollment). All metrics are enrollment-weighted and use real operating spending per student.
 Wealth-based metrics need property values, which start with school year 2010-11 (tax year 2010).
 """
 
@@ -25,13 +25,14 @@ def elasticity(df: pd.DataFrame):
 
 def run(con) -> pd.DataFrame:
     df = con.execute("""
-        SELECT year, cdn, enrollment, op_per_student_real, wealth_per_student_real
-        FROM mart_district_year
-        WHERE enrollment > 0 AND operating > 0
+        SELECT y.year, y.cdn, y.enrollment, y.op_per_student_real, y.wealth_per_student_real
+        FROM mart_district_year y LEFT JOIN mart_districts d USING (cdn)
+        WHERE y.enrollment > 0 AND y.operating > 0 AND NOT coalesce(d.enrollment_caution, FALSE)
     """).df()
     rows = []
     for year, g in df.groupby("year"):
         x, w = g.op_per_student_real.values, g.enrollment.values
+        ok = (x >= 5000) & (x <= 60000)
         row = {
             "year": int(year),
             "n_districts": len(g),
@@ -39,6 +40,9 @@ def run(con) -> pd.DataFrame:
             "mean_spend": wmean(x, w),
             "median_spend": wquantile(x, w, 0.5),
             "cv": wstd(x, w) / wmean(x, w),
+            # CV over district-years inside the $5k-$60k plausibility bounds (out-of-bounds values are
+            # logged in data/qa/spending_bounds_log.csv); one anomalous district can move the CV.
+            "cv_bounded": wstd(x[ok], w[ok]) / wmean(x[ok], w[ok]),
             "mcloone": mcloone(x, w),
             "p05_spend": wquantile(x, w, 0.05),
             "p95_spend": wquantile(x, w, 0.95),

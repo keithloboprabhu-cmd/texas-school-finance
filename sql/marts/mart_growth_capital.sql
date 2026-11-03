@@ -29,5 +29,5 @@ SELECT d.cdn, d.district_name, d.county, d.esc_region, d.locale, d.is_metro, d.c
             THEN e.capital_5y_real / (e.enroll_now - e.enroll_5y_ago) END AS proxy_capital_per_new_student,
        -- PROXY: real capital spending over 5 years per campus opened in those 5 years
        CASE WHEN c.new_campuses_5y > 0 THEN e.capital_5y_real / c.new_campuses_5y END AS proxy_capital_per_new_campus,
-       e.enroll_now < 500 AS small_district
+       e.enroll_now < 500 AS small_district, d.enrollment_caution, d.virtual_share
 FROM mart_districts d JOIN e USING (cdn) LEFT JOIN c USING (cdn);

@@ -45,7 +45,7 @@ def load(con) -> pd.DataFrame:
                d.econ_disadv_pct, d.english_learners_pct, d.special_ed_pct, d.land_sq_miles,
                d.median_household_income, d.child_poverty_rate
         FROM mart_district_year y JOIN mart_districts d USING (cdn)
-        WHERE y.is_current AND y.year = (SELECT max(year) FROM mart_district_year)
+        WHERE y.is_current AND NOT d.enrollment_caution AND y.year = (SELECT max(year) FROM mart_district_year)
           AND y.enrollment > 0 AND y.operating > 0 AND y.wealth_per_student_real > 0
     """).df()
     df["log_enrollment"] = np.log(df.enrollment)
