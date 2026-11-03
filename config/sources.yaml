@@ -11,8 +11,11 @@ tea_peims:
   files:
     - {name: peims_actuals_summarized_2009_2025.xlsx, url: "https://tea.texas.gov/media/423296"}
   fallback_landing: https://tea.texas.gov/about-tea/state-funding/state-funding-reports-and-data/peims-single-file-financial-data-downloads
-  notes: Also download the PEIMS Financial Data Dictionary linked from the landing page.
-  status: not yet downloaded
+  notes: >-
+    Summarized file (sheet DATAMART) verified: one row per district (incl. charters) and year,
+    YEAR = school-year ending year (2025 = 2024-25). Single-file district actuals for 2009-2025 are
+    downloaded by pipeline/ingest/tea_peims.py. Code meanings cited from FASRG Update 20.
+  status: verified 2026-11-03
 
 tea_sof:
   name: TEA Summary of Finances (SOF)
