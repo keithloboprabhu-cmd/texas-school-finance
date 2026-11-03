@@ -1,0 +1,7 @@
+# Law-change markers for the Equity Over Time page.
+# Rule: a marker is shown only if it has a primary-source URL that has been checked.
+# Format:
+#   - date: YYYY-MM-DD
+#     label: short label shown on charts
+#     source: primary-source URL (statute, TLO bill page or TEA)
+events: []

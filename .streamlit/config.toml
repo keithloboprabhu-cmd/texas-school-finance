@@ -1,0 +1,68 @@
+# Lone Star Ledger: "Modern Almanac" theme. Token values are documented in ui/theme.py.
+[server]
+enableStaticServing = true
+headless = true
+
+[client]
+toolbarMode = "minimal"
+showErrorDetails = false
+
+[browser]
+gatherUsageStats = false
+
+[theme]
+base = "light"
+primaryColor = "#A8432A"            # Texas red clay: selection, focus, links, active nav. Never data.
+backgroundColor = "#F5F1E8"         # paper
+secondaryBackgroundColor = "#FBF8F2" # card
+textColor = "#1B1A17"               # ink
+borderColor = "#D9D2C3"             # rule
+linkColor = "#A8432A"
+baseRadius = "4px"
+baseFontSize = 17
+font = "Inter Tight"
+headingFont = "Fraunces"
+codeFont = "JetBrains Mono"
+showSidebarBorder = true
+
+[[theme.fontFaces]]
+family = "Fraunces"
+url = "app/static/fonts/fraunces-latin-400-normal.woff2"
+weight = 400
+style = "normal"
+
+[[theme.fontFaces]]
+family = "Fraunces"
+url = "app/static/fonts/fraunces-latin-600-normal.woff2"
+weight = 600
+style = "normal"
+
+[[theme.fontFaces]]
+family = "Inter Tight"
+url = "app/static/fonts/inter-tight-latin-400-normal.woff2"
+weight = 400
+style = "normal"
+
+[[theme.fontFaces]]
+family = "Inter Tight"
+url = "app/static/fonts/inter-tight-latin-500-normal.woff2"
+weight = 500
+style = "normal"
+
+[[theme.fontFaces]]
+family = "Inter Tight"
+url = "app/static/fonts/inter-tight-latin-600-normal.woff2"
+weight = 600
+style = "normal"
+
+[[theme.fontFaces]]
+family = "JetBrains Mono"
+url = "app/static/fonts/jetbrains-mono-latin-400-normal.woff2"
+weight = 400
+style = "normal"
+
+[[theme.fontFaces]]
+family = "JetBrains Mono"
+url = "app/static/fonts/jetbrains-mono-latin-500-normal.woff2"
+weight = 500
+style = "normal"

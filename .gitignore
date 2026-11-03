@@ -1,4 +1,25 @@
-node_modules/
-.env
+# Python
 __pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Secrets
+.env
+.streamlit/secrets.toml
+
+# Data: raw downloads and intermediate files are never committed
+data/raw/*
+!data/raw/MANUAL_DOWNLOADS.md
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+data/warehouse.duckdb
+data/warehouse.duckdb.wal
+
+# OS / editors
 .DS_Store
+.idea/
+.vscode/

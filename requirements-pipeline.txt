@@ -1,0 +1,10 @@
+# Extra dependencies used only by the data pipeline (`make data`), not by the deployed app.
+-r requirements.txt
+requests
+openpyxl
+pdfplumber
+geopandas
+shapely
+topojson
+statsmodels
+scikit-learn

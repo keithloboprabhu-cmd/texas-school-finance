@@ -1,0 +1,48 @@
+# One source for every hover definition and the Methodology glossary.
+cdn:
+  label: CDN (County-District Number)
+  definition: TEA's 6-digit district identifier. The first three digits are the county number.
+ada:
+  label: ADA (average daily attendance)
+  definition: The average number of students in attendance each day; the base for most state funding.
+wada:
+  label: WADA (weighted average daily attendance)
+  definition: >-
+    ADA adjusted with weights for student needs and district characteristics, used by TEA as the
+    denominator for its measure of district property wealth.
+recapture:
+  label: Recapture (excess local revenue)
+  definition: >-
+    Local property-tax revenue above the level the school finance formulas entitle a district to keep,
+    which property-wealthy districts send to the state. Often called "Robin Hood."
+mo_rate:
+  label: M&O tax rate
+  definition: Maintenance and operations property tax rate; funds day-to-day spending.
+is_rate:
+  label: I&S tax rate
+  definition: Interest and sinking property tax rate; repays voter-approved bond debt (the "debt tax").
+elasticity:
+  label: Wealth elasticity of spending
+  definition: >-
+    The percent change in per-student spending associated with a 1% change in property wealth per
+    student. Zero means spending does not depend on wealth.
+mcloone:
+  label: McLoone index
+  definition: >-
+    Total spending on students below the median, divided by what that spending would be if each of
+    those students received the median amount. 1.0 means no inequality in the bottom half.
+cv:
+  label: Coefficient of variation
+  definition: The standard deviation of per-student spending divided by its mean.
+econ_disadv:
+  label: Economically disadvantaged
+  definition: TEA's flag for students eligible for free or reduced-price meals or other public assistance.
+cab:
+  label: CAB (capital appreciation bond)
+  definition: A bond that pays no interest until maturity, so interest compounds; usually costly.
+cib:
+  label: CIB (current interest bond)
+  definition: A bond that pays interest periodically over its life.
+refunding:
+  label: Refunding
+  definition: Issuing new bonds to refinance existing debt, as opposed to new-money bonds for new projects.

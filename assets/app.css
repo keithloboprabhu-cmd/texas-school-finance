@@ -1,0 +1,55 @@
+/* Lone Star Ledger: "Modern Almanac" styles.
+   Tokens mirror ui/theme.py. Hairlines instead of boxes, no shadows, no gradients. */
+:root {
+  --paper: #F5F1E8;
+  --card: #FBF8F2;
+  --ink: #1B1A17;
+  --ink-2: #5C5850;
+  --rule: #D9D2C3;
+  --land: #ECE6D9;
+  --clay: #A8432A;
+  --serif: "Fraunces", Georgia, serif;
+  --sans: "Inter Tight", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+/* Hide default Streamlit chrome */
+#MainMenu, footer, [data-testid="stDecoration"], [data-testid="stStatusWidget"] { display: none !important; }
+header[data-testid="stHeader"] { background: var(--paper); border-bottom: 1px solid var(--rule); }
+
+/* Page width and rhythm */
+.block-container, [data-testid="stMainBlockContainer"] { max-width: 1440px; padding-top: 6rem; padding-bottom: 4rem; }
+[data-testid="stVerticalBlock"] { gap: 1.25rem; }
+
+/* Type */
+h1, h2, h3 { font-family: var(--serif) !important; color: var(--ink); letter-spacing: -0.01em; }
+h1 { font-size: clamp(2.5rem, 4vw, 3.5rem) !important; font-weight: 400 !important; line-height: 1.05 !important; }
+h2 { font-size: 1.9rem !important; font-weight: 400 !important; }
+h3 { font-size: 1.35rem !important; font-weight: 600 !important; }
+small, .ll-caption { font-size: 0.8rem; color: var(--ink-2); }
+
+/* Almanac building blocks */
+.ll-kicker { font-family: var(--mono); font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); }
+.ll-subtitle { font-size: 1.1rem; color: var(--ink-2); max-width: 60ch; margin-top: -0.5rem; }
+.ll-rule { border: 0; border-top: 1px solid var(--rule); margin: 2rem 0; }
+.ll-num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.ll-metric { border-top: 1px solid var(--ink); padding-top: 0.5rem; }
+.ll-metric .value { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 2.2rem; line-height: 1.1; }
+.ll-metric .label { font-size: 0.85rem; color: var(--ink-2); }
+.ll-card { background: var(--card); border: 1px solid var(--rule); border-radius: 4px; padding: 1.25rem 1.5rem; }
+.ll-notice { background: var(--card); border: 1px solid var(--rule); border-left: 3px solid var(--clay); padding: 1rem 1.25rem; }
+.ll-notice code { font-size: 0.85rem; }
+abbr.ll-term { text-decoration: underline dotted var(--ink-2); text-underline-offset: 3px; cursor: help; }
+
+/* Tables and code: mono, tabular numerals */
+[data-testid="stDataFrame"], [data-testid="stTable"], code, pre { font-family: var(--mono) !important; font-variant-numeric: tabular-nums; }
+[data-testid="stDataFrame"] { border: 1px solid var(--rule); }
+
+/* Minimum text size: nothing below 13px */
+[data-testid="stCaptionContainer"], [data-testid="stWidgetLabel"] p { font-size: max(13px, 0.8rem) !important; }
+
+/* Mobile: tables scroll, comfortable gutters */
+@media (max-width: 640px) {
+  .block-container, [data-testid="stMainBlockContainer"] { padding-left: 16px; padding-right: 16px; }
+  h1 { font-size: 2.25rem !important; }
+}
