@@ -53,14 +53,17 @@ tea_tapr:
 census_saipe:
   name: Census SAIPE school district estimates (API)
   publisher: U.S. Census Bureau
-  landing: https://www.census.gov/programs-surveys/saipe/data/api.html
-  api: https://api.census.gov/data/timeseries/poverty/saipe/schdist
-  status: not yet downloaded
+  landing: https://www2.census.gov/programs-surveys/saipe/datasets/2024/2024-school-districts/
+  status: verified 2026-11-03
+  notes: 2024 estimates from Census's published file ussd24.xls (the Data API key was rejected as invalid). 1,017
+    Texas districts.
 census_acs:
   name: Census ACS 5-year estimates by school district (API)
   publisher: U.S. Census Bureau
-  landing: https://www.census.gov/data/developers/data-sets/acs-5year.html
-  status: not yet downloaded
+  landing: https://www2.census.gov/programs-surveys/acs/summary_file/2024/table-based-SF/
+  status: verified 2026-11-03
+  notes: 2020-2024 ACS 5-year table-based summary files B19013, B25077, B01003; summary levels 950/960/970. Median
+    income is top-coded at 250,000+.
 nces_boundaries:
   name: NCES EDGE School District Composites SY 2024-25 (TL 2025)
   publisher: National Center for Education Statistics
@@ -101,10 +104,10 @@ fred_cpi:
   name: CPI-U, all items (CPIAUCSL)
   publisher: Federal Reserve Bank of St. Louis (FRED), from BLS
   landing: https://fred.stlouisfed.org/series/CPIAUCSL
-  files:
-  - name: CPIAUCSL.csv
-    url: https://fred.stlouisfed.org/graph/fredgraph.csv?id=CPIAUCSL
-  status: not yet downloaded
+  files: []
+  status: verified 2026-11-03
+  notes: FRED API with key; committed snapshot data/ref/cpi_cpiaucsl_monthly.csv as fallback. School-year average
+    = July-June.
 tea_cptd:
   name: Comptroller certified school district property values (PTAD Tax Final), posted by TEA
   publisher: Texas Comptroller of Public Accounts, via Texas Education Agency
