@@ -7,6 +7,7 @@ import streamlit as st
 
 from ui import data
 from ui.components import md_money, page_header, rule, sy
+from ui.theme import html as html_out
 
 QA = data.ROOT / "data" / "qa"
 latest = int(data.query("meta_years").year.max())
@@ -44,6 +45,10 @@ st.dataframe(
 
 rule()
 st.subheader("What's counted and how districts are matched", anchor=False)
+html_out(
+    '<p class="ll-caption">In short: every Texas school district with a map boundary, one school year at a time. '
+    "Charter schools are shown separately.</p>"
+)
 st.markdown(
     md_money(f"""
 - **Unit:** one Texas school district in one school year. Years are labeled by the school year they end, so 2025
@@ -66,9 +71,14 @@ st.markdown(
 
 rule()
 st.subheader("Definitions", anchor=False)
+html_out(
+    '<p class="ll-caption">Each definition starts with what the measure means. The detail after it is for '
+    "readers who want to check our work against TEA's own reports.</p>"
+)
 st.markdown(
     md_money("""
-**Spending per student (the main measure).** Day-to-day spending from all funds: PEIMS objects 6100-6400 (payroll,
+**Spending per student (the main measure).** What a district spends in a year to run its schools, per student.
+It leaves out debt payments, construction and money sent to the state. In detail, it's day-to-day spending from all funds: PEIMS objects 6100-6400 (payroll,
 contracted services, supplies and other operating costs) in operating functions 11-61, plus 92 and 95 as TEA reports
 them. Capital projects funds (6xx) are left out. This matches TEA's own "total operating expenditures" for at least 99%
 of districts every year, and statewide to 0.000%. We then also remove money a district spends as the fiscal agent for a
@@ -85,7 +95,8 @@ The total is divided by fall enrollment and adjusted for inflation.
 - Function 92 isn't defined in FASRG Update 20, so it is **unverified**. TEA groups it with general administration,
   and we do the same.
 
-**Property wealth per student.** The Comptroller's certified value "used for school funding" (from TEA's PTAD Tax
+**Property wealth per student.** How much taxable property sits behind each student. In detail, it's the
+Comptroller's certified value "used for school funding" (from TEA's PTAD Tax
 Final files), divided by fall enrollment. We pair school year Y with tax year Y−1, the values the district taxes during
 that school year. TEA's own timing has changed over the years: before 2019-20, school funding used the prior year's
 values. TEA hasn't posted tax year 2009, so wealth measures start in 2010-11. TEA's tax year 2022 file lists 966
@@ -106,19 +117,20 @@ price differences (the NCES ACS-CWIFT index).
 
 **Small districts.** Fewer than 500 students. We flag them and never drop them. Wealth & Spending lets you hide them.
 
-**Statistics.** Statewide measures are weighted by enrollment. "How much spending rises with wealth" (the wealth
+**Statistics.** We fit simple trend lines and give bigger districts more weight, so a district of 50,000 students
+counts for more than one of 50. Statewide measures are weighted by enrollment. "How much spending rises with wealth" (the wealth
 elasticity) is the slope of a line fitted to log spending and log wealth, weighted by enrollment, with robust (HC1)
 errors. The fuller model also accounts for log enrollment, the shares of low-income students, English learners and
 special education students, setting (city, suburb, town or rural) and log students per square mile. We rank districts by
 how far they land from that model's prediction, and check the ranking with a Huber robust regression. The McLoone index
 divides what students below the median actually get by what they'd get if they were all at the median.
 
-**Debt.** From the Texas Bond Review Board, by state fiscal year (September to August). We count debt repaid from
+**Debt.** Money districts borrowed with voters' approval and still owe. The data comes from the Texas Bond Review Board, by state fiscal year (September to August). We count debt repaid from
 property taxes (general obligation bonds). Debt per ADA follows the Bond Review Board's own measure. The "paid off" chart
 groups remaining debt payments by each bond's final year. It isn't a year-by-year payment schedule, because the Bond
 Review Board doesn't publish those in bulk.
 
-**New campuses.** A school whose federal (NCES) ID first appears after 2015-16, using NCES school locations from 2015-16
+**New campuses.** Schools that opened in 2016-17 or later. In detail, a school whose federal (NCES) ID first appears after 2015-16, using NCES school locations from 2015-16
 to 2024-25. A new ID can also mean an existing school was reorganized. For 76% of new district campuses that TEA's
 AskTED directory dates, TEA's date is within a year of the federal listing.
 

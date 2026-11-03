@@ -11,6 +11,7 @@ from ui import charts, data
 from ui.components import (
     md_money,
     money,
+    more_less,
     nice,
     page_header,
     reading,
@@ -38,36 +39,56 @@ page_header(
 
 first, last = eq.iloc[0], eq.iloc[-1]
 w0 = eq.dropna(subset=["elasticity"]).iloc[0]
+gap_shrank = abs(last.quintile_gap_ratio - 1) < abs(w0.quintile_gap_ratio - 1)
+spread_grew = last.cv_bounded > first.cv_bounded
+lead = (
+    "Spending is less tied to wealth than it was"
+    if gap_shrank
+    else "Spending is more tied to wealth than it was"
+) + (
+    ", but it has become more uneven overall."
+    if spread_grew
+    else ", and it has become more even overall."
+)
+html_out(f'<p class="ll-caption">{lead}</p>')
 st.markdown(
     md_money(
-        f"From {sy(y0)} to {sy(y1)}, average spending per student, adjusted for inflation, went from "
-        f"**{money(first.mean_spend)}** to **{money(last.mean_spend)}** ({sy(y1)} dollars). The "
-        f"{term('mcloone', 'McLoone index')}, which shows how close the lower-spending half of students comes to "
-        f"the middle, moved from **{first.mcloone:.3f}** to **{last.mcloone:.3f}**. The spending gap between "
-        f"students in the wealthiest and poorest fifth of districts went from **{w0.quintile_gap_ratio - 1:+.1%}** "
-        f"in {sy(int(w0.year))} to **{last.quintile_gap_ratio - 1:+.1%}**."
+        f"Average spending per student, adjusted for inflation, went from **{money(first.mean_spend)}** in "
+        f"{sy(y0)} to **{money(last.mean_spend)}** in {sy(y1)}.\n\n"
+        f"In {sy(int(w0.year))}, students in the wealthiest fifth of districts got "
+        f"**{more_less((w0.quintile_gap_ratio - 1) * 100, digits=1)}** per student than students in the poorest fifth. "
+        f"By {sy(y1)}, the gap had {'shrunk' if gap_shrank else 'grown'} to "
+        f"**{abs(last.quintile_gap_ratio - 1) * 100:.1f}%**.\n\n"
+        f"Meanwhile, the half of students in lower-spending districts got **{last.mcloone:.0%}** of what the typical "
+        f"student got in {sy(y1)}, compared with **{first.mcloone:.0%}** in {sy(y0)} "
+        f"(this is the {term('mcloone', 'McLoone index')})."
     ),
     unsafe_allow_html=True,
 )
 st.caption(
-    "These are trends. They don't show that any law caused them. Averages are weighted by enrollment. Covers "
-    "school districts with boundaries, including ones that later merged (for the years they reported). Leaves "
-    "out 9 districts with many virtual or out-of-district students. Measures that use property wealth start in 2010-11."
+    "Larger districts count for more in these figures. They show trends, not proof that any law caused them. We "
+    "include districts that later merged, for the years they existed, and leave out 9 districts with large virtual "
+    "or out-of-area enrollment, because they skew the numbers. Comparisons that use property wealth start in 2010-11."
 )
 
 # ---------------------------------------------------------------- small multiples
 metrics = [
-    ("cv_bounded", "Spread of spending (coefficient of variation)", "lower = more equal", ".3f"),
-    ("mcloone", "McLoone index", "higher = more equal", ".3f"),
+    ("cv_bounded", "How spread out spending is", "lower = more even", ".3f"),
+    (
+        "mcloone",
+        "Lower half vs. the typical student (McLoone)",
+        "1.0 = lower half gets the typical amount",
+        ".3f",
+    ),
     (
         "restricted_range_ratio",
-        "High vs. low spenders (95th / 5th percentile)",
-        "lower = more equal",
+        "Top spenders vs. bottom spenders",
+        "how many times more the top 5% spend than the bottom 5%",
         ".2f",
     ),
-    ("elasticity", "How much spending rises with wealth", "0 = wealth makes no difference", ".3f"),
-    ("wealth_spend_corr", "Link between wealth and spending (correlation)", "0 = no link", ".2f"),
-    ("quintile_gap_ratio", "Wealthiest vs. poorest fifth: spending ratio", "1 = no gap", ".3f"),
+    ("elasticity", "% spending change for 1% more wealth", "0 = wealth makes no difference", ".3f"),
+    ("wealth_spend_corr", "How closely wealth and spending move together", "0 = not at all", ".2f"),
+    ("quintile_gap_ratio", "Wealthiest fifth vs. poorest fifth", "1.0 = same spending", ".3f"),
 ]
 fig = make_subplots(
     rows=2,
@@ -124,7 +145,7 @@ marker_text = "; ".join(
     for e in events
 )
 html_out(
-    f'<p class="ll-reading">The clay dotted line marks a law change, with a link to the bill: {marker_text}. '
+    f'<p class="ll-reading">The clay dotted line marks a change in school finance law. Bills: {marker_text}. '
     f"Laws that take effect after {sy(y1)} are listed but not drawn. In the first chart, the solid line leaves out "
     "district figures below $5,000 or above $60,000 per student, and the dotted line keeps them. One district that "
     "reported $130,791 per student in 2017-18 causes the spike.</p>"

@@ -149,3 +149,123 @@ def nice(name) -> str:
 def md_money(text: str) -> str:
     """Escape dollar signs so Streamlit markdown does not render them as LaTeX."""
     return text.replace("$", "\\$")
+
+
+# ---------------------------------------------------------------- plain-language number phrasing
+def per10(b: float) -> float:
+    """Elasticity -> % change in spending for 10% more wealth (b x 10)."""
+    return b * 10
+
+
+def pct_words(p: float, digits: int = 2) -> str:
+    """'0.67%' (no sign; direction is said in words)."""
+    return f"{abs(p):.{digits}f}%"
+
+
+def more_less(p: float, noun: str = "", digits: int = 2) -> str:
+    """'0.67% more' / '0.03% less'."""
+    return f"{pct_words(p, digits)} {'more' if p >= 0 else 'less'}{(' ' + noun) if noun else ''}"
+
+
+def range_words(lo: float, hi: float, digits: int = 2) -> str:
+    """'between 0.37% less and 0.30% more' / 'between 0.43% and 0.92% more'."""
+    if lo >= 0:
+        return f"between {abs(lo):.{digits}f}% and {abs(hi):.{digits}f}% more"
+    if hi <= 0:
+        return f"between {abs(hi):.{digits}f}% and {abs(lo):.{digits}f}% less"
+    return f"between {abs(lo):.{digits}f}% less and {abs(hi):.{digits}f}% more"
+
+
+def zero_sentence(lo: float, hi: float, what: str = "wealth") -> str:
+    """Say what zero means and whether it is inside the likely range."""
+    if lo <= 0 <= hi:
+        return (
+            f"If {what} made no difference at all, this number would be exactly zero. "
+            "Given the uncertainty, zero is well within range."
+        )
+    side = "more" if lo > 0 else "less"
+    return (
+        f"Even allowing for uncertainty, the number stays above zero, so districts with more {what} "
+        f"really do spend {side}."
+        if side == "more"
+        else f"Even allowing for uncertainty, the number stays below zero, so districts with more {what} "
+        "really do spend less."
+    )
+
+
+def explained_words(r2: float) -> str:
+    """Plain reading of R-squared."""
+    if r2 < 0.05:
+        return "almost none"
+    if r2 < 0.2:
+        return "a little"
+    if r2 < 0.5:
+        return "some"
+    return "much"
+
+
+def growth_effect_text(
+    slope: float,
+    lo: float,
+    hi: float,
+    lead_more: str,
+    lead_less: str,
+    verb_more: str,
+    verb_less: str,
+    n: int,
+    extra: str = "",
+) -> tuple[str, str]:
+    """Lead line and sentence for 'X per student vs. 5-year growth' fits on a log scale.
+    slope/lo/hi are per 1.0 (100 points) of growth; we describe 10 points. verb_* contain '{pct}'."""
+    import math
+
+    eff, elo, ehi = (math.exp(v * 0.1) - 1 for v in (slope, lo, hi))
+    up = eff >= 0
+    rng = (
+        f"between {abs(elo):.0%} and {abs(ehi):.0%} {'more' if up else 'less'}"
+        if (elo >= 0) == (ehi >= 0)
+        else f"between {abs(elo):.0%} less and {abs(ehi):.0%} more"
+    )
+    verb = (verb_more if up else verb_less).format(pct=f"{abs(eff):.0%}")
+    body = (
+        f"A district whose enrollment grew 10 percentage points faster over five years {verb}, give or take "
+        f"(likely range: {rng}). Based on {n:,} districts{extra}; larger districts count for more. This shows a "
+        "pattern, not proof that one causes the other."
+    )
+    return (lead_more if up else lead_less), body
+
+
+def share_words(x: float) -> str:
+    """0.33 -> 'About a third'; falls back to a percentage."""
+    for lo, hi, w in [
+        (0.23, 0.27, "About a quarter"),
+        (0.30, 0.36, "About a third"),
+        (0.47, 0.53, "About half"),
+        (0.63, 0.70, "About two-thirds"),
+        (0.72, 0.78, "About three-quarters"),
+    ]:
+        if lo <= x <= hi:
+            return w
+    return f"{x:.0%}"
+
+
+def change_words(x: float, digits: int = 1) -> str:
+    """-0.068 -> 'fell 6.8%'; 0.12 -> 'grew 12.0%'."""
+    if x is None or x != x:
+        return "has no comparable figure"
+    return f"{'grew' if x >= 0 else 'fell'} {abs(x) * 100:.{digits}f}%"
+
+
+FUNCTION_LABELS = {
+    "instruction": "Teaching",
+    "instructional support": "Teaching support and libraries",
+    "school leadership": "Principals and school leadership",
+    "student support": "Counseling, health and social work",
+    "transportation": "Buses",
+    "food service": "School meals",
+    "extracurricular": "Sports and activities",
+    "general administration": "Central administration",
+    "plant maintenance security": "Building upkeep and security",
+    "data processing": "Technology",
+    "community services": "Community services",
+}

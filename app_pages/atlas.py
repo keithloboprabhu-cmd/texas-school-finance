@@ -13,16 +13,20 @@ import streamlit as st
 from ui import charts, data, maps, tour
 from ui.components import (
     big_money,
+    explained_words,
     legend_bivariate,
     legend_diverging,
     legend_quantile,
     money,
+    more_less,
     nice,
     page_header,
     pct,
+    per10,
     reading,
     require_marts,
     rule,
+    share_words,
     sy,
     view_sql,
     view_table,
@@ -416,34 +420,45 @@ rec = data.query("finding_recapture", year=latest).iloc[0]
 f1, f2, f3 = st.columns(3, gap="large")
 with f1:
     html_out(
-        '<div class="ll-finding"><div class="num">01</div><p>In '
-        f"{sy(int(last.year))}, a district's property wealth told you almost nothing about its spending per "
-        f"student. Ten percent more wealth went with <b>{last.elasticity * 10:+.2f}%</b> more spending (likely range "
-        f"{last.elasticity_lo * 10:+.2f}% to {last.elasticity_hi * 10:+.2f}%). In {sy(int(first.year))} the "
-        f"figure was {first.elasticity * 10:+.2f}%.</p></div>"
+        '<div class="ll-finding"><div class="num">01</div>'
+        f'<p class="ll-caption">Wealth explains {explained_words(last.elasticity_r2)} of the differences in '
+        "district spending.</p><p>"
+        + (
+            f"In {sy(int(last.year))}, districts with 10% more property wealth per student spent <b>about the same</b> "
+            f"per student: {more_less(per10(last.elasticity))}, give or take."
+            if abs(per10(last.elasticity)) < 0.5
+            else f"In {sy(int(last.year))}, districts with 10% more property wealth per student spent "
+            f"<b>{more_less(per10(last.elasticity))}</b> per student, give or take."
+        )
+        + f" In {sy(int(first.year))}, they spent {more_less(per10(first.elasticity))}.</p></div>"
     )
     fig = go.Figure()
-    fig.add_scatter(x=eq.year, y=eq.elasticity, mode="lines+markers", line=dict(color=INK_2))
+    fig.add_scatter(x=eq.year, y=eq.elasticity * 10, mode="lines+markers", line=dict(color=INK_2))
     fig.add_scatter(
         x=list(eq.year) + list(eq.year[::-1]),
-        y=list(eq.elasticity_hi) + list(eq.elasticity_lo[::-1]),
+        y=list(eq.elasticity_hi * 10) + list(eq.elasticity_lo[::-1] * 10),
         fill="toself",
         fillcolor="rgba(92,88,80,0.15)",
         line=dict(width=0),
         hoverinfo="skip",
     )
     fig.add_hline(y=0, line=dict(color=DIVERGING_7[0], width=1, dash="dot"))
-    fig.update_layout(
-        showlegend=False, yaxis_title="% more spending per 1% more wealth", margin=dict(t=10)
-    )
+    fig.update_layout(showlegend=False, yaxis_title="% change", margin=dict(t=10))
     charts.show(fig, height=180, key="f1")
     st.page_link("app_pages/wealth_spending.py", label="Explore →")
 with f2:
     html_out(
-        '<div class="ll-finding"><div class="num">02</div><p>'
-        f"<b>{int(over.n_small)} of the {int(over.n)}</b> districts that spend furthest above our prediction have "
-        f"fewer than 500 students. The typical one has {over.median_enrollment:,.0f} students and spends "
-        f"{money(over.median_actual)} per student, against {money(over.median_predicted)} predicted. Only "
+        '<div class="ll-finding"><div class="num">02</div>'
+        '<p class="ll-caption">The biggest over-spenders are tiny districts.</p><p>'
+        + (
+            f"<b>All {int(over.n)}</b> districts"
+            if over.n_small == over.n
+            else f"<b>{int(over.n_small)} of the {int(over.n)}</b> districts"
+        )
+        + " that spend the most above what we'd expect have fewer than 500 students."
+        + f" The typical one has {over.median_enrollment:,.0f} students and spends "
+        f"{money(over.median_actual)} per student, about {over.median_actual / over.median_predicted:.1f} times the "
+        f"{money(over.median_predicted)} we'd expect from its wealth, students and location. Only "
         f"{pct(over.share_small_statewide, 0)} of Texas districts are that small.</p></div>"
     )
     ol = data.query("outliers_latest")
@@ -456,17 +471,19 @@ with f2:
         )
     )
     fig.update_xaxes(type="log", title="students (log scale)")
-    fig.update_layout(yaxis_title="above or below prediction", margin=dict(t=10))
+    fig.update_layout(yaxis_title="vs. expected", margin=dict(t=10))
     charts.show(fig, height=180, key="f2")
     st.page_link("app_pages/wealth_spending.py", label="Explore →")
 with f3:
     html_out(
-        '<div class="ll-finding"><div class="num">03</div><p>'
-        f"Districts sent <b>{big_money(rec.total_paid)}</b> to the state in recapture in {sy(latest)}. "
-        f"{big_money(rec.paid_by_mineral_majority)} of it ({rec.paid_by_mineral_majority / rec.total_paid:.0%}) came "
-        f"from {int(rec.payers_mineral_majority)} districts where oil, gas and minerals make up most of the tax base. "
+        '<div class="ll-finding"><div class="num">03</div>'
+        f'<p class="ll-caption">{share_words(rec.paid_by_mineral_majority / rec.total_paid)} of recapture comes '
+        "from mineral-rich districts.</p><p>"
+        f"In {sy(latest)}, property-wealthy districts sent <b>{big_money(rec.total_paid)}</b> to the state. "
+        f"{big_money(rec.paid_by_mineral_majority)} of it came from {int(rec.payers_mineral_majority)} districts "
+        "where oil, gas and minerals make up most of the taxable property. And "
         f"{int(rec.payers_below_median_income)} of the {int(rec.payers)} paying districts have below-median "
-        "household income.</p></div>"
+        "household income, so a district can owe recapture even when its families aren't well off.</p></div>"
     )
     ry = data.query("recapture_by_year")
     fig = go.Figure(go.Bar(x=ry.year, y=ry.recapture_real / 1e9, marker_color=INK_2))

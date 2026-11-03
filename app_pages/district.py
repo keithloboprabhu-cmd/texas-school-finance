@@ -12,7 +12,9 @@ import streamlit as st
 
 from ui import charts, data, maps
 from ui.components import (
+    FUNCTION_LABELS,
     big_money,
+    change_words,
     md_money,
     metric,
     money,
@@ -101,10 +103,13 @@ with top_r:
         ),
         height=230,
     )
-    rs = "sent recapture to the state" if h.recapture_paid > 0 else "sent no recapture to the state"
     html_out(
-        f'<div class="ll-caption">Location · {rs} in {sy(latest)}'
-        + (f" ({big_money(h.recapture_paid)})" if h.recapture_paid > 0 else "")
+        '<div class="ll-caption">'
+        + (
+            f"Sent {big_money(h.recapture_paid)} to the state in recapture in {sy(latest)}."
+            if h.recapture_paid > 0
+            else f"Sent no recapture to the state in {sy(latest)}."
+        )
         + "</div>"
     )
     link = f"?district={cdn}"
@@ -148,9 +153,11 @@ with top_l:
     if h.predicted_real == h.predicted_real:
         st.markdown(
             md_money(
-                f"Based on its wealth, size, students, setting and density, we'd expect this district to spend "
-                f"**{money(h.predicted_real)}** per student. It actually spends **{money(h.op_per_student_real)}** "
-                f"(score {h.std_residual:+.2f})."
+                f"Based on its wealth, size, students, location type and density, we'd expect this district to "
+                f"spend about **{money(h.predicted_real)}** per student. It actually spends "
+                f"**{money(h.op_per_student_real)}**, which is "
+                f"{abs(h.op_per_student_real / h.predicted_real - 1):.0%} "
+                f"{'more' if h.op_per_student_real >= h.predicted_real else 'less'} than expected."
             )
         )
 
@@ -158,6 +165,7 @@ with top_l:
 rule()
 a, b = st.columns([1.5, 1], gap="large")
 fn = data.query("district_functions", cdn=cdn)
+fn["function_group"] = fn.function_group.map(lambda g: FUNCTION_LABELS.get(g, g))
 with a:
     st.subheader("What the money is spent on", anchor=False)
     fig = go.Figure()
@@ -272,6 +280,7 @@ st.caption(
     "students from low-income families, in the latest year."
 )
 fp = data.query("peer_fingerprints", cdn=cdn)
+fp["petal"] = fp.petal.map(lambda g: FUNCTION_LABELS.get(g, g))
 order = [cdn] + pe.cdn.tolist()
 petals = sorted(fp.petal.unique())
 cols = st.columns(6)
@@ -369,9 +378,13 @@ with t2:
         charts.show(fig, height=300, key="debt")
         st.markdown(
             md_money(
-                f"Fiscal year {int(h.debt_fy)}: owes **{big_money(h.tax_supported_principal)}** in voter-approved debt, "
-                f"or **{money(h.debt_per_student)}** per student. {pct(h.cab_share_principal, 1)} of it is in "
-                "deferred-interest bonds."
+                f"In fiscal year {int(h.debt_fy)}, this district owed **{big_money(h.tax_supported_principal)}** in "
+                f"voter-approved debt, or **{money(h.debt_per_student)}** per student. "
+                + (
+                    "None of it is in deferred-interest bonds."
+                    if not (h.cab_share_principal > 0)
+                    else f"{pct(h.cab_share_principal, 1)} of it is in deferred-interest bonds."
+                )
             )
         )
         view_table(db, "debt")
@@ -392,8 +405,13 @@ with g1:
     fig.update_layout(yaxis_title="students enrolled in the fall")
     charts.show(fig, height=260, key="enr")
     st.markdown(
-        f"Enrollment changed **{pct(h.growth_5y)}** over 5 years and **{pct(h.growth_10y)}** over 10 years. "
-        f"**{int(h.new_campuses_since_2016_17 or 0)}** campuses opened since 2016-17 and are still open."
+        f"Enrollment **{change_words(h.growth_5y)}** over 5 years and **{change_words(h.growth_10y)}** over 10 years. "
+        + (
+            "No new campuses have opened since 2016-17."
+            if not h.new_campuses_since_2016_17
+            else f"**{int(h.new_campuses_since_2016_17)}** "
+            f"{'campus has' if int(h.new_campuses_since_2016_17) == 1 else 'campuses have'} opened since 2016-17."
+        )
     )
 with g2:
     cp = data.query("district_campuses", cdn=cdn)

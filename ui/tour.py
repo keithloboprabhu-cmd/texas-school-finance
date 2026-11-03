@@ -30,7 +30,7 @@ def stops(year: int) -> list[dict]:
                 "with other districts. If wealth drove spending, most districts would be light gray or dark purple."
             ),
             number=f"{last.elasticity * 10:+.2f}%",
-            number_label=f"extra spending per student for every 10% more property wealth, {sy(int(last.year))}",
+            number_label=f"change in spending per student when property wealth is 10% higher, {sy(int(last.year))}",
         ),
         dict(
             title="Mineral wealth",

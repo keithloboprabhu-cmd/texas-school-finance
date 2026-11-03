@@ -65,7 +65,7 @@ with m4:
     metric(
         "Typical share of the budget sent",
         pct(rd.share_of_spending.median(), 1),
-        "recapture as a share of day-to-day spending plus recapture",
+        "among paying districts: recapture compared with day-to-day spending plus recapture",
     )
 
 rule()
@@ -265,11 +265,15 @@ fig = go.Figure(
     )
 )
 fig.update_layout(font=dict(size=13))
+html_out(
+    f'<p class="ll-caption">Districts spent {big_money(tot_use - tot_src)} more than they took in, using '
+    "savings and borrowing to cover it.</p>"
+)
 charts.show(fig, height=520, key="sankey")
 reading(
     f"Money districts took in (left) and what they spent it on (right), across all funds, not adjusted for "
-    f"inflation. They took in {big_money(tot_src)} and spent {big_money(tot_use)}. Savings and borrowing, such as "
-    "bond sales, cover the difference."
+    f"inflation. They took in {big_money(tot_src)} and spent {big_money(tot_use)}. Bond sales are one kind of "
+    "borrowing that covers the difference."
 )
 view_table(
     data.query("money_cycle", year=year)

@@ -10,6 +10,7 @@ import streamlit as st
 
 from ui import charts, data, maps
 from ui.components import (
+    growth_effect_text,
     legend_diverging,
     metric,
     money,
@@ -208,11 +209,22 @@ fig.update_yaxes(
 )
 fig.update_layout(legend=dict(orientation="h", y=1.08))
 charts.show(fig, height=440, key="ci")
-st.markdown(
-    f"For every 10 more percentage points of growth, districts spend about **{np.exp(b * 0.1) - 1:+.0%}** more per "
-    f"student on buildings and equipment (likely range {np.exp(lo * 0.1) - 1:+.0%} to {np.exp(hi * 0.1) - 1:+.0%}; "
-    f"{n:,} districts with at least 500 students, weighted by enrollment). This counts construction and land "
-    "(PEIMS function 81) plus equipment and other capital purchases (object 6600), across all funds."
+lead, body = growth_effect_text(
+    b,
+    lo,
+    hi,
+    "Faster-growing districts tend to spend more on buildings.",
+    "Faster-growing districts tend to spend less on buildings.",
+    "spends about **{pct} more** per student on buildings and equipment",
+    "spends about **{pct} less** per student on buildings and equipment",
+    n,
+    extra=" with at least 500 students",
+)
+html_out(f'<p class="ll-caption">{lead}</p>')
+st.markdown(body)
+st.caption(
+    "Buildings and equipment means construction and land (PEIMS function 81) plus other capital purchases "
+    "(object 6600), across all funds."
 )
 view_table(ci[["cdn", "district_name", "growth_5y", "capital_per_student_5y_avg", "flag"]], "ci")
 view_sql("growth")

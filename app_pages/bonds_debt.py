@@ -11,6 +11,7 @@ import streamlit as st
 from ui import charts, data, maps
 from ui.components import (
     big_money,
+    growth_effect_text,
     legend_quantile,
     md_money,
     metric,
@@ -198,6 +199,12 @@ fig.update_layout(
     xaxis_title="year the debt is fully paid off",
     legend=dict(orientation="h", y=1.08),
 )
+owed = mw.groupby("final_maturity_year").debt_service_outstanding.sum().sort_index()
+half_year = int(owed.index[(owed.cumsum() / owed.sum()) >= 0.5][0])
+html_out(
+    f'<p class="ll-caption">Half of the money still owed will be paid off by {half_year}. The rest runs '
+    f"as late as {int(owed.index.max())}.</p>"
+)
 charts.show(fig, height=380, key="wall")
 reading(
     f"All remaining debt payments, as of fiscal year {fy}, grouped by the year each bond is fully paid off. "
@@ -223,6 +230,15 @@ with a:
             mode="lines+markers",
             line=dict(color=CLAY),
         )
+    )
+    cab0 = ds.cab_principal.iloc[0] / (ds.cab_principal.iloc[0] + ds.cib_principal.iloc[0])
+    cab1 = ds.cab_principal.iloc[-1] / (ds.cab_principal.iloc[-1] + ds.cib_principal.iloc[-1])
+    html_out(
+        f'<p class="ll-caption">Districts use far fewer of these costly bonds than they did: {cab0:.1%} of '
+        f"debt in {int(ds.fiscal_year.iloc[0])}, {cab1:.1%} in {int(ds.fiscal_year.iloc[-1])}.</p>"
+        if cab1 < cab0
+        else f'<p class="ll-caption">CABs make up {cab1:.1%} of school district debt, up from {cab0:.1%} in '
+        f"{int(ds.fiscal_year.iloc[0])}.</p>"
     )
     fig.update_yaxes(tickformat=".1%", title="share of debt in CABs")
     charts.show(fig, height=260, key="cab")
@@ -258,8 +274,18 @@ with b:
             f"to **{share.iloc[-1]:.0%}** in {sy(int(ta.year.iloc[-1]))}, as the operations rate fell."
         )
     )
+    html_out(
+        '<p class="ll-caption">'
+        + (
+            "More of the school tax bill now goes to paying off debt."
+            if share.iloc[-1] > share.iloc[0]
+            else "Less of the school tax bill now goes to paying off debt."
+        )
+        + "</p>"
+    )
     reading(
-        "The operations rate (M&O) pays day-to-day costs. The debt rate (I&S) repays bonds. These are the rates districts adopted, as reported by TEA."
+        "The operations rate (M&O) pays day-to-day costs. The debt rate (I&S) repays bonds. "
+        "These are the rates districts adopted, as reported by TEA."
     )
     view_table(ta, "anatomy")
     view_sql("tax_anatomy")
@@ -309,10 +335,17 @@ fig.update_xaxes(tickformat=".0%", title="5-year enrollment change")
 fig.update_yaxes(type="log", title=f"voter-approved debt per student, fiscal year {fy} (log scale)")
 fig.update_layout(showlegend=False)
 charts.show(fig, height=420, key="dg")
-st.markdown(
-    f"For every 10 more percentage points of enrollment growth over five years, districts owe about "
-    f"**{(np.exp(slope * 0.1) - 1):+.0%}** more debt per student (likely range {(np.exp(lo * 0.1) - 1):+.0%} to "
-    f"{(np.exp(hi * 0.1) - 1):+.0%}; {n:,} districts, weighted by enrollment). This shows a pattern, not a cause."
+lead, body = growth_effect_text(
+    slope,
+    lo,
+    hi,
+    "Faster-growing districts tend to carry more debt.",
+    "Faster-growing districts tend to carry less debt.",
+    "owes about **{pct} more** debt per student",
+    "owes about **{pct} less** debt per student",
+    n,
 )
+html_out(f'<p class="ll-caption">{lead}</p>')
+st.markdown(body)
 view_table(dg, "dg")
 view_sql("debt_growth")
