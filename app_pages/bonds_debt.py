@@ -17,7 +17,6 @@ from ui.components import (
     metric,
     money,
     nice,
-    notice,
     page_header,
     pct,
     reading,
@@ -39,14 +38,6 @@ page_header(
     "03 · Borrowing",
     "Bonds & Debt",
     "What Texas school districts owe, when it comes due, and how much of the tax bill goes to debt.",
-)
-
-notice(
-    "Bond elections aren't shown yet.",
-    "Election results (how much a district asked for, what for, and whether voters approved it) come from the "
-    "Texas Bond Review Board's search site, debtsearch.brb.texas.gov. Our build couldn't reach that site. The copy "
-    "on the Texas Open Data Portal only links to it and was last updated in 2017. We'll add the Ballot Beeswarm "
-    "and pass rates once we have the data. Nothing on this page is estimated to fill the gap.",
 )
 
 dd = data.query("debt_districts")
