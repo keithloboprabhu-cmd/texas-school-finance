@@ -2,6 +2,8 @@
 -r requirements.txt
 requests
 openpyxl
+xlrd
+pyogrio
 pdfplumber
 geopandas
 shapely
