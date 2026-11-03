@@ -24,6 +24,13 @@ The full build spec lives in the owner's prompt; this file records the conventio
 - `config/`: `glossary.yaml` (all hover definitions), `events.yaml` (law-change markers; a marker
   needs a checked primary-source URL), `sources.yaml`.
 
+## Docs
+- `python scripts/readme_findings.py` rewrites the README findings from the marts (never edit those numbers by hand).
+- `python scripts/palette_check.py` regenerates `data/qa/palette_check.md`.
+- Chart queries live in `sql/app/` (shown by "View SQL"); SQL Lab saved queries in `sql/saved/` (first comment line =
+  description). `tests/test_app_queries.py` runs them all against the committed marts.
+- pydeck: plain string layer arguments are JS expressions; quote literals (`width_units="'pixels'"`).
+
 ## Commands
 - Install: `pip install -r requirements-dev.txt` (app-only: `requirements.txt`)
 - Pipeline: `make data` (`python -m pipeline.build`)

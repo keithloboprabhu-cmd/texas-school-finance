@@ -165,6 +165,7 @@ if view == "3D Wealth Relief":
             get_fill_color="properties.fill",
             get_line_color=[251, 248, 242, 120],
             auto_highlight=True,
+            highlight_color=[168, 67, 42, 160],
         )
     )
 else:
